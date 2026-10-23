@@ -69,7 +69,8 @@ func _ready() -> void:
 	_load_private_characters()
 	sound = SOUNDS.new()
 	add_child(sound)
-	if DisplayServer.get_name() != "headless":
+	sound.prepare_voice(words)
+	if DisplayServer.get_name() != "headless" and OS.get_name() != "Windows":
 		var voices := DisplayServer.tts_get_voices_for_language("pt")
 		if not voices.is_empty():
 			voice_id = voices[0]
@@ -342,7 +343,11 @@ func _advance_word() -> void:
 
 
 func _speak(value: String) -> void:
-	if voice_id != "" and not sound.muted:
+	if sound.muted:
+		return
+	if OS.get_name() == "Windows":
+		sound.narrator.speak(value)
+	elif voice_id != "":
 		DisplayServer.tts_speak(value.to_lower(), voice_id, 75, 1.0, 0.85, 0, true)
 
 

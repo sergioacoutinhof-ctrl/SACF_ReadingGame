@@ -16,6 +16,8 @@ Jogo de alfabetização 2D para tablets Android. A criança escolhe uma princesa
 - Um toque é aceito por animação; não responder oferece outra oportunidade sem registrar erro.
 - Conteúdo público genérico: BOLA, CASA e PATO.
 
+No Windows, a voz é preparada como áudio local em segundo plano e reproduzida pelo jogo, evitando o bloqueio do reprodutor de voz do sistema.
+
 O editor de conteúdo, as gravações de fonemas, a progressão adaptativa, os volumes separados, a redução de efeitos e o instalador Android ainda fazem parte das próximas etapas.
 
 ## Abrir no computador
@@ -35,6 +37,7 @@ A direção da corrida é vertical; a tela continua em formato paisagem para dei
 - [Arte, prompts, áudio e licença da fonte](docs/ARTE-E-AUDIO.md)
 - [Pacotes locais de personagens](docs/PERSONAGENS-LOCAIS.md)
 - [Corrida bônus de plataforma](docs/BONUS-DE-PLATAFORMA.md)
+- [Correção de estabilidade da voz no Windows](docs/ESTABILIDADE-VOZ-WINDOWS.md)
 
 Teste de lógica e acessibilidade no Godot:
 

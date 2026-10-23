@@ -1,8 +1,11 @@
 extends Node
 
+const WINDOWS_VOICE = preload("res://windows_voice.gd")
+
 var muted := false
 var music: AudioStreamPlayer
 var effects: AudioStreamPlayer
+var narrator: Node
 var collect := preload("res://assets/audio/collect.wav")
 var complete := preload("res://assets/audio/complete.wav")
 var retry := preload("res://assets/audio/retry.wav")
@@ -21,6 +24,12 @@ func _ready() -> void:
 	effects = AudioStreamPlayer.new()
 	effects.volume_db = -4.0
 	add_child(effects)
+	narrator = WINDOWS_VOICE.new()
+	add_child(narrator)
+
+
+func prepare_voice(words: Array) -> void:
+	narrator.prepare(words)
 
 
 func start_music() -> void:
@@ -33,7 +42,9 @@ func toggle_mute() -> void:
 	if muted:
 		music.stop()
 		effects.stop()
-		DisplayServer.tts_stop()
+		narrator.cancel()
+		if OS.get_name() != "Windows" and DisplayServer.get_name() != "headless":
+			DisplayServer.tts_stop()
 	else:
 		start_music()
 
