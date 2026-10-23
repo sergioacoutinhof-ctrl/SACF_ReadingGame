@@ -1,5 +1,170 @@
 [
-  {"word": "BOLA", "image": "ball"},
-  {"word": "CASA", "image": "house"},
-  {"word": "PATO", "image": "duck"}
+  {
+    "word": "MAMÃE",
+    "image": "mom"
+  },
+  {
+    "word": "PAPAI",
+    "image": "dad"
+  },
+  {
+    "word": "BEBÊ",
+    "image": "baby"
+  },
+  {
+    "word": "IRMÃO",
+    "image": "boy"
+  },
+  {
+    "word": "IRMÃ",
+    "image": "girl"
+  },
+  {
+    "word": "AVÓ",
+    "image": "grandma"
+  },
+  {
+    "word": "AVÔ",
+    "image": "grandpa"
+  },
+  {
+    "word": "BOLA",
+    "image": "ball"
+  },
+  {
+    "word": "CASA",
+    "image": "house"
+  },
+  {
+    "word": "PATO",
+    "image": "duck"
+  },
+  {
+    "word": "SOL",
+    "image": "sun"
+  },
+  {
+    "word": "LUA",
+    "image": "moon"
+  },
+  {
+    "word": "MAR",
+    "image": "sea"
+  },
+  {
+    "word": "PÉ",
+    "image": "foot"
+  },
+  {
+    "word": "MÃO",
+    "image": "hand"
+  },
+  {
+    "word": "GATO",
+    "image": "cat"
+  },
+  {
+    "word": "CÃO",
+    "image": "dog"
+  },
+  {
+    "word": "UVA",
+    "image": "grapes"
+  },
+  {
+    "word": "OVO",
+    "image": "egg"
+  },
+  {
+    "word": "PÃO",
+    "image": "bread"
+  },
+  {
+    "word": "VACA",
+    "image": "cow"
+  },
+  {
+    "word": "SAPO",
+    "image": "frog"
+  },
+  {
+    "word": "MALA",
+    "image": "bag"
+  },
+  {
+    "word": "DADO",
+    "image": "dice"
+  },
+  {
+    "word": "LUPA",
+    "image": "magnifier"
+  },
+  {
+    "word": "PIPA",
+    "image": "kite"
+  },
+  {
+    "word": "BOLO",
+    "image": "cake"
+  },
+  {
+    "word": "COPO",
+    "image": "cup"
+  },
+  {
+    "word": "CAMA",
+    "image": "bed"
+  },
+  {
+    "word": "MESA",
+    "image": "table"
+  },
+  {
+    "word": "PRAIA",
+    "image": "beach"
+  },
+  {
+    "word": "PEIXE",
+    "image": "fish"
+  },
+  {
+    "word": "FLOR",
+    "image": "flower"
+  },
+  {
+    "word": "LIVRO",
+    "image": "book"
+  },
+  {
+    "word": "MAÇÃ",
+    "image": "apple"
+  },
+  {
+    "word": "ÁGUA",
+    "image": "water"
+  },
+  {
+    "word": "BANANA",
+    "image": "banana"
+  },
+  {
+    "word": "CARRO",
+    "image": "car"
+  },
+  {
+    "word": "BALÃO",
+    "image": "balloon"
+  },
+  {
+    "word": "ESCOLA",
+    "image": "school"
+  },
+  {
+    "word": "ESTRELA",
+    "image": "sparkle"
+  },
+  {
+    "word": "CAVALO",
+    "image": "horse"
+  }
 ]

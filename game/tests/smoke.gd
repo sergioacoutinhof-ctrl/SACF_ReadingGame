@@ -12,7 +12,12 @@ func _run() -> void:
 	game.voice_id = ""
 	game.set_process(false)
 	game.sound.toggle_mute()
-	assert(game.words.size() == 3)
+	assert(game.content.entries.size() >= 42 and game.words.size() == 6)
+	game.content.profile_path = "user://tests/smoke-%d.json" % OS.get_process_id()
+	game.content.entries.assign([{"word": "BOLA", "image": "ball", "enabled": true}, {"word": "CASA", "image": "house", "enabled": true}, {"word": "PATO", "image": "duck", "enabled": true}])
+	game.content.cursor = 0
+	game.content.holes_enabled = false
+	game.words = game.content.session_words()
 	assert(game.sprites.size() == 3)
 	assert(game.character_names.size() == 3 and game.character_roles.size() == 3)
 	var original_sprites = game.sprites.duplicate()
@@ -94,6 +99,8 @@ func _run() -> void:
 	game._process(14.94)
 	assert(game.mode == game.BONUS, "O prêmio deve durar os 15 segundos completos.")
 	game._process(0.02)
+	assert(game.mode == game.BONUS_RESULT)
+	game._process(2.01)
 	assert(game.mode == game.PLAY and game.word_index == 1)
 	assert(game.letter_index == 0 and game.star_count == 4)
 	assert(game.wrong_choice_count == errors_before_bonus and game.no_response_count == missed_before_bonus)
@@ -108,8 +115,11 @@ func _run() -> void:
 		game._process(game.WORD_CELEBRATION + 0.01)
 		assert(game.mode == game.BONUS and game.bonus.age == 0)
 		game._process(15.0)
+		assert(game.mode == game.BONUS_RESULT)
+		game._process(2.01)
 	assert(game.mode == game.SESSION_DONE)
 	assert(game.star_count == 12)
+	DirAccess.remove_absolute(game.content.profile_path)
 	game.free()
 	await process_frame
 	print("SMOKE_OK: metades completas, mouse/toque, proteção contra repetição, corrida vertical, áudio, partículas e palavra → bônus → próxima palavra")

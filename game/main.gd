@@ -7,6 +7,10 @@ const PLAY := 1
 const WORD_DONE := 2
 const SESSION_DONE := 3
 const BONUS := 4
+const BONUS_RESULT := 5
+const FAMILY_CONTENT = preload("res://family_content.gd")
+const PARENT_PANEL = preload("res://parent_panel.gd")
+const ANDROID_GUARD = preload("res://android_guard.gd")
 const WORD_CELEBRATION := 1.8
 const BONUS_RUN = preload("res://bonus_run.gd")
 const ALPHABET := "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
@@ -52,15 +56,20 @@ var panels: Dictionary = {}
 var sound: Node
 var bonus := BONUS_RUN.new()
 var bonus_total_stars := 0
+var content := FAMILY_CONTENT.new()
+var parents: CanvasLayer
+var android_guard: Node
+var word_art: Dictionary = {}
 
 
 func _ready() -> void:
 	rng.randomize()
 	effect_rng.randomize()
 	font = ThemeDB.fallback_font
-	var parsed: Variant = JSON.parse_string(FileAccess.get_file_as_string("res://content/words.json"))
-	if typeof(parsed) == TYPE_ARRAY:
-		words = parsed
+	get_tree().auto_accept_quit = false
+	get_tree().quit_on_go_back = false
+	content.load_profile()
+	words = content.session_words()
 	var rounded_font := FontVariation.new()
 	rounded_font.base_font = TITLE_FONT
 	rounded_font.variation_opentype = {TextServerManager.get_primary_interface().name_to_tag("wght"): 600.0}
@@ -70,6 +79,16 @@ func _ready() -> void:
 	sound = SOUNDS.new()
 	add_child(sound)
 	sound.prepare_voice(words)
+	android_guard = ANDROID_GUARD.new()
+	add_child(android_guard)
+	parents = PARENT_PANEL.new()
+	add_child(parents)
+	parents.setup(content, android_guard)
+	parents.content_changed.connect(_content_changed)
+	parents.resumed.connect(_resume_after_parent)
+	parents.exit_requested.connect(_authorized_exit)
+	if not content.has_pin() and DisplayServer.get_name() != "headless":
+		_request_parent.call_deferred()
 	if DisplayServer.get_name() != "headless" and OS.get_name() != "Windows":
 		var voices := DisplayServer.tts_get_voices_for_language("pt")
 		if not voices.is_empty():
@@ -149,6 +168,8 @@ func _apply_character_pack(manifest: Dictionary, texture: Texture2D) -> bool:
 
 
 func _process(delta: float) -> void:
+	if parents != null and parents.is_open:
+		return
 	elapsed += delta
 	scroll_offset = fmod(scroll_offset + delta * 0.25, 1.0)
 	var goal_x := WIDTH / 2.0 if runner_lane < 0 else _lane_x(runner_lane, 650.0)
@@ -175,11 +196,20 @@ func _process(delta: float) -> void:
 			_start_bonus()
 	elif mode == BONUS:
 		_process_bonus(delta)
+	elif mode == BONUS_RESULT:
+		word_done_age += delta
+		if word_done_age >= 2.0:
+			_advance_word()
 	queue_redraw()
 
 
 func _input(event: InputEvent) -> void:
+	if parents != null and parents.is_open:
+		return
 	if event is InputEventKey and event.pressed and not event.echo:
+		if event.keycode == KEY_ESCAPE:
+			_request_parent()
+			return
 		if event.keycode == KEY_M:
 			sound.toggle_mute()
 			return
@@ -208,6 +238,9 @@ func _input(event: InputEvent) -> void:
 		return
 	var point := _to_design(screen_position)
 	if mode == SELECT:
+		if Rect2(1040, 14, 216, 52).has_point(point):
+			_request_parent()
+			return
 		for index in 3:
 			if _character_rect(index).has_point(point):
 				character_index = index
@@ -218,7 +251,52 @@ func _input(event: InputEvent) -> void:
 			mode = SELECT
 
 
+func _notification(what: int) -> void:
+	if what in [NOTIFICATION_WM_CLOSE_REQUEST, NOTIFICATION_WM_GO_BACK_REQUEST]:
+		_request_parent()
+
+
+func _request_parent() -> void:
+	if parents == null or parents.is_open:
+		return
+	sound.music.stop()
+	sound.effects.stop()
+	sound.narrator.cancel()
+	if OS.get_name() != "Windows" and DisplayServer.get_name() != "headless":
+		DisplayServer.tts_stop()
+	parents.request_access()
+
+
+func _resume_after_parent() -> void:
+	if mode != SELECT:
+		sound.start_music()
+
+
+func _content_changed() -> void:
+	words = content.session_words()
+	word_index = 0
+	letter_index = 0
+	mode = SELECT
+	sound.set_bonus(false)
+	sound.prepare_voice(words)
+	queue_redraw()
+
+
+func _authorized_exit() -> void:
+	if parents == null or not parents.authorized:
+		return
+	android_guard.stop_pinning()
+	await get_tree().create_timer(0.35).timeout
+	get_tree().quit()
+
+
 func _start_session() -> void:
+	if OS.get_name() == "Android" and (not content.has_pin() or not content.android_exit_pin_confirmed or not android_guard.device_has_pin() or android_guard.lock_state() == 0):
+		_request_parent()
+		return
+	if mode == SELECT or mode == SESSION_DONE:
+		words = content.session_words()
+		sound.prepare_voice(words)
 	if words.is_empty():
 		return
 	word_index = 0
@@ -302,7 +380,7 @@ func _start_bonus() -> void:
 	if mode != WORD_DONE:
 		return
 	mode = BONUS
-	bonus.reset(effect_rng.randi())
+	bonus.reset(effect_rng.randi(), _current_word(), content.holes_enabled)
 	particles.clear()
 	selected_lane = -1
 	feedback_age = 0.0
@@ -322,7 +400,13 @@ func _process_bonus(delta: float) -> void:
 		bonus_total_stars += pickups.size()
 		sound.play_bonus_star()
 	if bonus.is_finished():
-		_advance_word()
+		mode = BONUS_RESULT
+		word_done_age = 0.0
+		if bonus.won():
+			sound.play_word_complete()
+			_burst(Vector2(640, 300), 60)
+		else:
+			sound.play_retry()
 
 
 func _advance_word() -> void:
@@ -330,6 +414,7 @@ func _advance_word() -> void:
 	particles.clear()
 	word_index += 1
 	if word_index >= words.size():
+		content.advance_session(words.size())
 		mode = SESSION_DONE
 		_speak("Muito bem! Você completou as palavras.")
 	else:
@@ -382,8 +467,10 @@ func _draw() -> void:
 			_draw_word_done()
 		SESSION_DONE:
 			_draw_session_done()
-		BONUS:
+		BONUS, BONUS_RESULT:
 			_draw_bonus()
+			if mode == BONUS_RESULT:
+				_draw_bonus_result()
 	draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
 
 
@@ -397,6 +484,8 @@ func _draw_background() -> void:
 
 
 func _draw_select() -> void:
+	_panel(Rect2(1040, 14, 216, 52), Color("fffdf3"), Color.TRANSPARENT, 18)
+	_text("Responsáveis", Vector2(1148, 48), 22, TEAL, true, true)
 	draw_rect(Rect2(0, 0, WIDTH, HEIGHT), Color(0.91, 0.98, 0.95, 0.2))
 	_text("Aventura das Letras", Vector2(640, 98), 62, INK, true, true)
 	_text("Escolha quem vai brincar com você", Vector2(640, 146), 25, INK, true)
@@ -565,6 +654,16 @@ func _draw_bonus() -> void:
 		draw_circle(Vector2(x + 76, 618), 7, Color("6eb582"))
 		_panel(Rect2(x + 5, 645, 52, 12), Color("d9aa81"), Color.TRANSPARENT, 6)
 		_panel(Rect2(x + 51, 681, 30, 9), Color("e0b68d"), Color.TRANSPARENT, 4)
+	for hole in bonus.holes:
+		var x: float = hole.position.x - bonus.distance
+		if x < -150 or x > WIDTH + 100:
+			continue
+		draw_rect(Rect2(x, 596, hole.size.x, 124), Color("344958"))
+		draw_rect(Rect2(x + 9, 604, hole.size.x - 18, 116), Color("253543"))
+		draw_line(Vector2(x + 4, 601), Vector2(x + 4, 715), Color("a37561"), 8)
+		draw_line(Vector2(x + hole.size.x - 4, 601), Vector2(x + hole.size.x - 4, 715), Color("a37561"), 8)
+		_panel(Rect2(x - 24, 590, 27, 16), Color("a8d891"), Color.TRANSPARENT, 6)
+		_panel(Rect2(x + hole.size.x - 3, 590, 27, 16), Color("a8d891"), Color.TRANSPARENT, 6)
 	for platform in bonus.platforms:
 		var screen := Rect2(platform.position - Vector2(bonus.distance, 0), platform.size)
 		if screen.end.x < -20 or screen.position.x > WIDTH + 20:
@@ -574,20 +673,26 @@ func _draw_bonus() -> void:
 		for step in 4:
 			draw_circle(screen.position + Vector2(20 + step * 49, 8), 5, Color("80ba7d"))
 		_polyline([screen.position + Vector2(27, 27), screen.position + Vector2(29, 44), screen.position + Vector2(35, 49)], Color("a1c590"), 3)
-	for star in bonus.stars:
-		var position: Vector2 = star["position"] - Vector2(bonus.distance, 0)
-		if star["collected"] or position.x < -30 or position.x > WIDTH + 30:
+	for token in bonus.stars:
+		var position: Vector2 = token["position"] - Vector2(bonus.distance, 0)
+		if token["collected"] or position.x < -70 or position.x > WIDTH + 70:
 			continue
-		position.y += sin(bonus.age * 3.5 + position.x * 0.01) * 4.0
-		draw_circle(position, 27, Color(1.0, 0.94, 0.61, 0.22))
-		_star(position + Vector2(0, 2), 19, Color("d99830"))
-		_star(position, 18, GOLD, -PI / 2.0 + sin(bonus.age * 2.0) * 0.08)
-		draw_circle(position + Vector2(-4, -6), 3, Color("fff7ca"))
+		var pulse := 1.0 + sin(bonus.age * 4.0 + token["index"]) * 0.04
+		draw_circle(position, 55 * pulse, Color(1, 0.94, 0.61, 0.24))
+		_panel(Rect2(position - Vector2(37, 40), Vector2(74, 80)), Color("fff6d0"), GOLD, 20, 4)
+		_text(str(token["letter"]), position + Vector2(0, 20), 56, INK, true, true)
+		_star(position + Vector2(31, -34), 11, GOLD, bonus.age)
 	_draw_bonus_character()
 	_draw_particles()
 	_panel(Rect2(25, 20, 1230, 112), Color("fffdf3"), Color.WHITE, 26, 3)
-	_text("Hora de brincar!", Vector2(59, 66), 37, TEAL, false, true)
+	_text("Pegue as letrinhas!", Vector2(59, 66), 34, TEAL, false, true)
 	_text("Você completou: " + _current_word(), Vector2(60, 98), 22, INK, false, true)
+	var token_width: float = minf(43.0, 430.0 / maxf(1.0, _current_word().length()))
+	for index in _current_word().length():
+		var slot := Rect2(430 + index * token_width, 48, token_width - 3, 51)
+		var got: bool = bonus.stars[index]["collected"]
+		_panel(slot, Color("bfeadc") if got else Color("ecebe2"), Color.TRANSPARENT, 8)
+		_text(_current_word().substr(index, 1), slot.get_center() + Vector2(0, 10), int(minf(32, token_width)), TEAL if got else INK, true, true)
 	_panel(Rect2(882, 40, 157, 59), Color("fff0bf"), Color.TRANSPARENT, 24)
 	_star(Vector2(913, 69), 16, Color("e4aa26"))
 	_text(str(bonus.collected), Vector2(982, 83), 33, INK, true, true)
@@ -600,12 +705,23 @@ func _draw_bonus() -> void:
 	if bar_width > 1:
 		_panel(Rect2(59, 115, bar_width, 7), Color("86c9b4"), Color.TRANSPARENT, 3)
 	_panel(Rect2(280, 653, 720, 48), Color("fff9e9"), Color.TRANSPARENT, 23)
-	var caption := "TOQUE EM QUALQUER LUGAR PARA PULAR"
+	var caption := "PULE, PEGUE AS LETRAS E CUIDADO COM OS BURACOS!" if content.holes_enabled else "TOQUE PARA PULAR E PEGAR AS LETRAS!"
 	if bonus.remaining() < 2.2:
 		caption = "JÁ VAMOS PARA A PRÓXIMA PALAVRA"
 		if word_index + 1 >= words.size():
 			caption = "QUE AVENTURA! VOCÊ CONSEGUIU!"
 	_text(caption, Vector2(640, 684), 23, INK, true, true)
+
+
+func _draw_bonus_result() -> void:
+	draw_rect(Rect2(0, 0, WIDTH, HEIGHT), Color(0.08, 0.18, 0.24, 0.5))
+	_panel(Rect2(295, 190, 690, 345), Color("fffdf3"), Color.WHITE, 32, 3)
+	var title := "Palavra completa!" if bonus.won() else ("Ops, um buraquinho!" if bonus.failed else "Fim desta aventura!")
+	_text(title, Vector2(640, 264), 40, TEAL, true, true)
+	_text("%d de %d letrinhas" % [bonus.collected, _current_word().length()], Vector2(640, 326), 30, INK, true, true)
+	_text(_current_word(), Vector2(640, 396), 54, INK, true, true)
+	_text("Já vamos para a próxima palavra!", Vector2(640, 480), 24, TEAL, true, true)
+	_draw_particles()
 
 
 func _draw_bonus_character() -> void:
@@ -767,6 +883,22 @@ func _draw_particles() -> void:
 
 func _word_image(center: Vector2, kind: String, factor: float) -> void:
 	var f := factor
+	if word_index >= 0 and word_index < words.size():
+		var photo: Texture2D = content.photo_texture(words[word_index])
+		if photo != null:
+			_panel(Rect2(center - Vector2.ONE * 78 * f, Vector2.ONE * 156 * f), Color.WHITE, Color.TRANSPARENT, 15)
+			draw_texture_rect(photo, Rect2(center - Vector2.ONE * 71 * f, Vector2.ONE * 142 * f), false)
+			return
+	if kind.begins_with("character:"):
+		var index := clampi(kind.trim_prefix("character:").to_int(), 0, 2)
+		_character(index, center + Vector2(0, 77 * f), 160 * f)
+		return
+	var artwork := "res://assets/word_images/" + kind + ".svg"
+	if not word_art.has(kind) and ResourceLoader.exists(artwork):
+		word_art[kind] = load(artwork)
+	if word_art.has(kind):
+		draw_texture_rect(word_art[kind], Rect2(center - Vector2.ONE * 82 * f, Vector2.ONE * 164 * f), false)
+		return
 	match kind:
 		"ball":
 			draw_circle(center + Vector2(3, 5) * f, 74 * f, Color(0.15, 0.33, 0.3, 0.12))

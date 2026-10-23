@@ -1,33 +1,14 @@
-# Corrida bônus de plataforma (v0.3)
+# Bônus de plataforma — v0.4
 
-![Corrida bônus com personagem genérico](images/bonus.png)
+Cada palavra completa libera até 15 segundos de corrida automática. Um toque em qualquer lugar faz pular. As letras da mesma palavra aparecem em ordem no cenário, inclusive letras repetidas e acentuadas; a criança precisa saltar para coletá-las. Cada coleta toca um som, explode partículas em forma de estrela e acende a letra correspondente no painel.
 
-A cada palavra completa, o jogo mostra a grafia, pronuncia a palavra e comemora por 1,8 segundo. Em seguida, abre uma corrida de plataforma de **15 segundos**, com o personagem escolhido para a partida.
+Há até três buracos, visíveis antes da aproximação. Cair encerra a tentativa do bônus. Se todas as letras forem coletadas até o final, o jogo comemora a palavra completa; se faltar alguma, encerra a tentativa sem a vitória. Um resultado breve antecede a próxima palavra. A palavra que já foi formada na corrida de leitura continua concluída, e a queda não altera os registros de leitura.
 
-## Controle e recompensa
+O responsável pode desligar buracos e quedas na área protegida por PIN. O salto continua sendo necessário para coletar letras. Há tolerância para um toque pouco antes de aterrissar ou logo depois de sair de uma borda, e toques repetidos no ar não causam saltos extras. As animações variam entre os três personagens.
 
-- O cenário se move automaticamente para a esquerda, enquanto o personagem corre para a direita.
-- Um toque ou clique em qualquer parte da tela provoca um salto. A barra de espaço também funciona no computador.
-- O caminho é contínuo, com plataformas baixas e estrelas para coletar.
-- Não há buracos, vidas ou penalidade por deixar uma estrela passar.
-- Os 15 segundos terminam com ou sem toques; nenhuma pontuação é exigida para voltar às letras.
-- As estrelas do bônus são separadas dos acertos de leitura.
-- O último bônus ocorre antes da tela de conclusão da partida.
+O desenho do curso varia com uma semente, preservando a ordem da grafia. Os testes verificam coleta por salto, vitória, perda por queda, acentos, duração máxima, quadros lentos e a possibilidade de completar palavras curtas e longas. O conforto e o grau de dificuldade precisam ser observados no tablet real.
 
-Há 0,24 segundo de antecipação de toque antes de aterrissar e 0,12 segundo de tolerância depois de sair de uma plataforma. Toques repetidos no ar não geram saltos adicionais. Essas tolerâncias atendem ao controle de um único toque e devem ser observadas no tablet real.
-
-## Personagens
-
-O ursinho corre com mais balanço e pequenos pulos; a princesa tem um movimento leve de saia e trilha de brilho; o cavaleiro tem passadas mais firmes. Os três podem saltar. A animação deforma uma malha simples do atlas existente e conserva o rosto, o traje e os nomes de pacotes locais.
-
-## Implementação e verificação
-
-A física está em `game/bonus_run.gd`. O fluxo é `PLAY → WORD_DONE → BONUS → PLAY`, ou `SESSION_DONE` depois da última palavra. A nova fase não altera a palavra já concluída.
-
-O teste `game/tests/bonus.gd` cobre a duração de 15 segundos, término sem toque, salto único, aterrissagem em plataforma, antecipação de toque, tolerância de borda, coleta única e quadros lentos. O teste de fluxo cobre o prêmio de todas as palavras e o retorno automático.
-
-O script de prévia renderiza o bônus dos três papéis. Capturas com personagens locais ficam fora da documentação pública. O parâmetro `--generic-characters` gera imagens somente com o conjunto genérico.
-
-## Próxima observação no tablet
-
-Observar se o tempo de salto e a corrida estão confortáveis, se a instrução por voz é suficiente e se o retorno à próxima palavra fica claro. O painel de responsáveis poderá oferecer ajuste da duração ou desativação do bônus quando for construído.
+```text
+godot --headless --path game --script res://tests/bonus.gd
+godot --headless --path game --script res://tests/smoke.gd
+```

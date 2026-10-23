@@ -28,6 +28,14 @@ func _run() -> void:
 	game = load("res://main.tscn").instantiate()
 	root.add_child(game)
 	await process_frame
+	game.parents.is_open = false
+	game.parents.cover.hide()
+	game.content.profile_path = "user://tests/voice-%d.json" % OS.get_process_id()
+	game.content.entries.assign([{"word": "BOLA", "image": "ball", "enabled": true}, {"word": "CASA", "image": "house", "enabled": true}, {"word": "PATO", "image": "duck", "enabled": true}])
+	game.content.cursor = 0
+	game.content.holes_enabled = false
+	game.words = game.content.session_words()
+	game.sound.prepare_voice(game.words)
 	var deadline := Time.get_ticks_msec() + 25000
 	while game.sound.narrator.worker_pid > 0 and Time.get_ticks_msec() < deadline:
 		await process_frame
@@ -65,12 +73,15 @@ func _run() -> void:
 			_tap(viewport_size / 2.0)
 			await create_timer(0.65).timeout
 		assert(Time.get_ticks_msec() - bonus_started >= 14900)
+		while game.mode == game.BONUS_RESULT:
+			await process_frame
 		print("VOICE_RUN: word %d and its 15-second bonus completed" % (word_number + 1))
 	assert(game.mode == game.SESSION_DONE and game.star_count == 12)
 	await create_timer(2.0).timeout
 	var spoken: int = game.sound.narrator.played_count - baseline
 	assert(spoken >= 22, "Todas as letras, palavras e transições precisam tocar com voz ligada.")
 	print("VOICE_REAL_OK: %d spoken cues, %d responsive frames, complete session and three real-time bonuses" % [spoken, frames])
+	DirAccess.remove_absolute(game.content.profile_path)
 	game.free()
 	await create_timer(0.15).timeout
 	quit()

@@ -50,3 +50,7 @@ Bônus de plataforma de 15 segundos após cada palavra, inclusive a última. Cor
 ## Atualização da versão 0.3.2
 
 APK de teste Android exportado e assinado, com ARM de 32 e 64 bits e perfis genérico/personalizado. Ferramentas de exportação instaladas no computador. Conferência do pacote feita antes da entrega; instalação, fluidez e voz no tablet real aguardam o primeiro teste.
+
+## Atualização da versão 0.4
+
+Catálogo público com 42 palavras e ilustrações, pacote particular de palavras, rodadas de seis palavras, cadastro de fotos e edição de palavras no aparelho. PIN criado pelo responsável protege configurações e saída. Integração com fixação nativa do Android e instruções para exigir a senha ao desafixar; validação dos gestos no tablet real continua necessária. Bônus atualizado com letras da mesma palavra, buracos, quedas, vitória e opção de desligar os buracos.

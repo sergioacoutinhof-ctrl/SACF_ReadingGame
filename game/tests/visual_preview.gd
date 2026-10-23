@@ -1,5 +1,20 @@
 extends SceneTree
 
+class PreviewAndroidGuard extends Node:
+	var last_error := ""
+	func available() -> bool:
+		return true
+	func lock_state() -> int:
+		return 0
+	func device_has_pin() -> bool:
+		return true
+	func start_pinning() -> bool:
+		return false
+	func stop_pinning() -> void:
+		pass
+	func security_settings() -> void:
+		pass
+
 var output_dir := ""
 var generic_characters := false
 
@@ -28,9 +43,13 @@ func _run() -> void:
 	root.add_child(game)
 	await process_frame
 	game.set_process(false)
+	game.parents.is_open = false
+	game.parents.cover.hide()
 	game.voice_id = ""
 	if generic_characters:
 		game._load_default_characters()
+		game.content.entries = game.content.entries.filter(func(entry: Dictionary): return not str(entry["image"]).begins_with("character:"))
+		game.words = game.content.session_words()
 	game.elapsed = 0.2
 	await _capture("selection")
 	game._start_session()
@@ -53,8 +72,28 @@ func _run() -> void:
 		game.bonus.request_jump()
 		game._process(0.30)
 		await _capture("bonus-" + game.character_roles[index])
-	game._process(15.0)
+	game.mode = game.WORD_DONE
+	game._start_bonus()
+	game.bonus.distance = 270
+	game.bonus.feet_y = 470
+	game.bonus.grounded = false
+	await _capture("bonus-letters-holes")
+	game.bonus.failed = true
+	game.mode = game.BONUS_RESULT
+	await _capture("bonus-fall-result")
+	game._process(2.01)
 	await _capture("back-to-letters")
+	game._request_parent()
+	await _capture("parent-pin")
+	# Prévia pública da configuração, sem criar PIN nem editar perfil real.
+	game.parents.authorized = true
+	game.parents._show_words()
+	await _capture("word-photo-settings")
+	var preview_guard := PreviewAndroidGuard.new()
+	game.add_child(preview_guard)
+	game.parents.guard = preview_guard
+	game.parents._show_home()
+	await _capture("parent-android-settings")
 	game.free()
 	await create_timer(0.15).timeout
 	print("VISUAL_OK: letras, três personagens no bônus e retorno renderizados pelo Godot")

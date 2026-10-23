@@ -11,22 +11,25 @@ Jogo de alfabetização 2D para tablets Android. A criança escolhe uma princesa
 - Letras grandes, palavra completa como pista e marcação das letras já coletadas.
 - Personagens e cenário ilustrados, salto ao coletar, estrelas, partículas e comemoração de palavra completa.
 - Trilha suave e efeitos musicais originais, reproduzidos offline.
-- Ao completar cada palavra, corrida bônus de 15 segundos com plataformas, salto por toque em qualquer lugar e estrelas extras. Depois, retorno automático às letras.
+- Ao completar cada palavra, corrida bônus de até 15 segundos com letras da mesma palavra, buracos, salto por toque em qualquer lugar e explosões de estrelinhas. Cair encerra a tentativa; buracos podem ser desligados pelo responsável. Depois, retorno automático às letras.
 - Passos e pulos com movimentos diferentes para ursinho, princesa e cavaleiro, inclusive nos pacotes locais.
 - Um toque é aceito por animação; não responder oferece outra oportunidade sem registrar erro.
-- Conteúdo público genérico: BOLA, CASA e PATO.
+- Catálogo público com 42 palavras e ilustrações; pacote privado pode acrescentar nomes da família.
+- Rodadas de seis palavras, com avanço pelo catálogo.
+- Área dos responsáveis com PIN de seis dígitos, edição de palavras e troca de ilustrações por fotos locais.
+- Pedido de fixação nativa no Android, com orientação para exigir a senha do tablet ao desafixar.
 
 No Windows, a voz é preparada como áudio local em segundo plano e reproduzida pelo jogo, evitando o bloqueio do reprodutor de voz do sistema.
 
-O editor de conteúdo, as gravações de fonemas, a progressão adaptativa, os volumes separados e a redução de efeitos ainda fazem parte das próximas etapas. Um APK de teste Android já pode ser exportado.
+Gravações de fonemas, progressão adaptativa, volumes separados, redução de efeitos e importação/exportação de perfis continuam nas próximas etapas. A versão 0.4 já permite editar palavras e fotos e exportar o APK de teste.
 
 ## Abrir no computador
 
 1. Importe `game/project.godot` no [Godot 4.7.2 Standard](https://godotengine.org/download/archive/4.7.2-stable/).
-2. Execute com **F5**.
+2. Execute com **F5**. Na primeira abertura, crie e confirme o PIN de seis números.
 3. Escolha um personagem. Durante a corrida, clique ou toque em qualquer altura da metade correspondente à letra.
 4. No bônus, toque em qualquer lugar para pular; a barra indica o tempo até a próxima palavra. No computador, a barra de espaço também pula.
-5. A tecla **M** liga ou desliga o áudio completo no computador.
+5. A tecla **M** liga ou desliga o áudio completo no computador. **Esc** abre o pedido de PIN; a saída fica na área dos responsáveis.
 
 A direção da corrida é vertical; a tela continua em formato paisagem para deixar as duas áreas amplas. A validação de alcance e ritmo no tablet real ainda está pendente.
 
@@ -36,6 +39,7 @@ Veja o [passo a passo de instalação e exportação Android](docs/INSTALAR-NO-A
 
 ## Documentos e verificação
 
+- [Palavras, fotos e PIN](docs/PALAVRAS-FOTOS-E-PIN.md)
 - [Requisitos públicos](docs/REQUISITOS-PUBLICOS.md)
 - [Plano de desenvolvimento](docs/PLANO-DE-DESENVOLVIMENTO.md)
 - [Arte, prompts, áudio e licença da fonte](docs/ARTE-E-AUDIO.md)
@@ -48,6 +52,7 @@ Teste de lógica e acessibilidade no Godot:
 ```text
 godot --headless --path game --script res://tests/smoke.gd
 godot --headless --path game --script res://tests/bonus.gd
+godot --headless --path game --script res://tests/family_and_parent.gd
 ```
 
 Capturas reais de seleção, letras, coleta, conclusão, bônus dos três personagens e retorno às letras, com janela gráfica. Use um destino fora de game/ para evitar importar as capturas como recursos:
