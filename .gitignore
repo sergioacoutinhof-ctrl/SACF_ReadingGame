@@ -1,0 +1,9 @@
+# Godot generated data
+.godot/
+*.tmp
+*.apk
+*.aab
+
+# Family photos, voices and local settings never belong in this public repo.
+private/
+*.keystore
