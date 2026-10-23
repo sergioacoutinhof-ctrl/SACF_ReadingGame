@@ -30,6 +30,7 @@ A direção da corrida é vertical; a tela continua em formato paisagem para dei
 - [Requisitos públicos](docs/REQUISITOS-PUBLICOS.md)
 - [Plano de desenvolvimento](docs/PLANO-DE-DESENVOLVIMENTO.md)
 - [Arte, prompts, áudio e licença da fonte](docs/ARTE-E-AUDIO.md)
+- [Pacotes locais de personagens](docs/PERSONAGENS-LOCAIS.md)
 
 Teste de lógica e acessibilidade no Godot:
 

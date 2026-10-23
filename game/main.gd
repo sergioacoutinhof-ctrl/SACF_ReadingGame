@@ -42,6 +42,8 @@ var voice_id := ""
 var font: Font
 var title_font: Font
 var sprites: Array[AtlasTexture] = []
+var character_names: Array[String] = []
+var character_roles: Array[String] = []
 var particles: Array[Dictionary] = []
 var panels: Dictionary = {}
 var sound: Node
@@ -58,12 +60,8 @@ func _ready() -> void:
 	rounded_font.base_font = TITLE_FONT
 	rounded_font.variation_opentype = {TextServerManager.get_primary_interface().name_to_tag("wght"): 600.0}
 	title_font = rounded_font
-	# Regiões isoladas evitam pixels vizinhos nas bordas do atlas transparente.
-	for region in [Rect2(17, 96, 511, 845), Rect2(559, 202, 441, 731), Rect2(1040, 82, 479, 860)]:
-		var atlas := AtlasTexture.new()
-		atlas.atlas = FRIENDS
-		atlas.region = region
-		sprites.append(atlas)
+	_load_default_characters()
+	_load_private_characters()
 	sound = SOUNDS.new()
 	add_child(sound)
 	if DisplayServer.get_name() != "headless":
@@ -71,6 +69,77 @@ func _ready() -> void:
 		if not voices.is_empty():
 			voice_id = voices[0]
 	queue_redraw()
+
+
+func _load_default_characters() -> void:
+	sprites.clear()
+	character_names.assign(["Princesa", "Ursinho", "Cavaleiro"])
+	character_roles.assign(["princess", "bear", "knight"])
+	for region in [Rect2(17, 96, 511, 845), Rect2(559, 202, 441, 731), Rect2(1040, 82, 479, 860)]:
+		var atlas := AtlasTexture.new()
+		atlas.atlas = FRIENDS
+		atlas.region = region
+		sprites.append(atlas)
+
+
+func _load_private_characters() -> bool:
+	for manifest_path in ["user://characters/pack.json", "res://private/characters/pack.json"]:
+		if not FileAccess.file_exists(manifest_path):
+			continue
+		var manifest: Variant = JSON.parse_string(FileAccess.get_file_as_string(manifest_path))
+		if not manifest is Dictionary:
+			continue
+		var filename := str(manifest.get("atlas", "friends.png"))
+		if filename != filename.get_file() or filename.contains(":") or filename.contains("\\"):
+			continue
+		var image_path: String = manifest_path.get_base_dir().path_join(filename)
+		var texture: Texture2D
+		if ResourceLoader.exists(image_path, "Texture2D"):
+			texture = load(image_path) as Texture2D
+		elif FileAccess.file_exists(image_path):
+			var image := Image.load_from_file(image_path)
+			if image != null and not image.is_empty():
+				texture = ImageTexture.create_from_image(image)
+		if texture != null and _apply_character_pack(manifest, texture):
+			return true
+	return false
+
+
+func _apply_character_pack(manifest: Dictionary, texture: Texture2D) -> bool:
+	var entries: Variant = manifest.get("characters", [])
+	if not entries is Array or entries.size() != 3:
+		return false
+	var next_sprites: Array[AtlasTexture] = []
+	var next_names: Array[String] = []
+	var next_roles: Array[String] = []
+	var bounds := Rect2(Vector2.ZERO, texture.get_size())
+	for entry in entries:
+		if not entry is Dictionary:
+			return false
+		var region: Variant = entry.get("region", [])
+		var display_name := str(entry.get("name", "")).strip_edges().left(24)
+		var role := str(entry.get("role", ""))
+		if not region is Array or region.size() != 4 or display_name.is_empty():
+			return false
+		if role not in ["princess", "bear", "knight"]:
+			return false
+		for coordinate in region:
+			if typeof(coordinate) != TYPE_INT and typeof(coordinate) != TYPE_FLOAT:
+				return false
+		var rectangle := Rect2(float(region[0]), float(region[1]), float(region[2]), float(region[3]))
+		if rectangle.size.x <= 0 or rectangle.size.y <= 0 or not bounds.encloses(rectangle):
+			return false
+		var atlas := AtlasTexture.new()
+		atlas.atlas = texture
+		atlas.region = rectangle
+		next_sprites.append(atlas)
+		next_names.append(display_name)
+		next_roles.append(role)
+	# Só trocar o conjunto depois de validar as três entradas.
+	sprites = next_sprites
+	character_names = next_names
+	character_roles = next_roles
+	return true
 
 
 func _process(delta: float) -> void:
@@ -266,16 +335,15 @@ func _draw_select() -> void:
 	draw_rect(Rect2(0, 0, WIDTH, HEIGHT), Color(0.91, 0.98, 0.95, 0.2))
 	_text("Aventura das Letras", Vector2(640, 98), 62, INK, true, true)
 	_text("Escolha quem vai brincar com você", Vector2(640, 146), 25, INK, true)
-	var names := ["Princesa", "Ursinho", "Cavaleiro"]
-	var colors := [Color("f5e8fb"), Color("e2f7ec"), Color("e4f1ff")]
+	var colors_by_role := {"princess": Color("f5e8fb"), "bear": Color("e2f7ec"), "knight": Color("e4f1ff")}
 	for index in 3:
 		var tile := _character_rect(index)
-		_panel(tile, colors[index], Color.WHITE, 30, 4)
+		_panel(tile, colors_by_role[character_roles[index]], Color.WHITE, 30, 4)
 		_star(tile.position + Vector2(37, 38), 11, GOLD)
 		_star(tile.position + Vector2(277, 65), 7, Color(1, 1, 1, 0.9))
 		var bob := sin(elapsed * 2.4 + index * 0.8) * 5.0
 		_character(index, Vector2(tile.get_center().x, 486.0 + bob), 268.0)
-		_text(names[index], Vector2(tile.get_center().x, 543), 35, INK, true, true)
+		_text(character_names[index], Vector2(tile.get_center().x, 543), 35, INK, true, true)
 		_text("TOQUE PARA BRINCAR", Vector2(tile.get_center().x, 581), 16, TEAL, true)
 	_panel(Rect2(340, 645, 600, 45), Color(1, 1, 1, 0.88), Color.TRANSPARENT, 22)
 	_text("Uma aventura, uma letrinha de cada vez", Vector2(640, 675), 22, INK, true, true)

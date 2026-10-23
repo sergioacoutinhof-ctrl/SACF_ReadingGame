@@ -14,6 +14,27 @@ func _run() -> void:
 	game.sound.toggle_mute()
 	assert(game.words.size() == 3)
 	assert(game.sprites.size() == 3)
+	assert(game.character_names.size() == 3 and game.character_roles.size() == 3)
+	var original_sprites = game.sprites.duplicate()
+	var original_names = game.character_names.duplicate()
+	var original_roles = game.character_roles.duplicate()
+	assert(not game._apply_character_pack({"characters": []}, game.FRIENDS))
+	assert(game.character_names == original_names, "Um pacote incompleto não pode substituir os personagens.")
+	var pack := {"characters": [
+		{"name": "Hero 1", "role": "bear", "region": [559, 202, 441, 731]},
+		{"name": "Hero 2", "role": "princess", "region": [17, 96, 511, 845]},
+		{"name": "Hero 3", "role": "knight", "region": [1040, 82, 479, 860]}]}
+	assert(game._apply_character_pack(pack, game.FRIENDS))
+	assert(game.character_roles == ["bear", "princess", "knight"])
+	assert(game.character_names == ["Hero 1", "Hero 2", "Hero 3"])
+	pack["characters"][1]["region"] = [-10, 0, 100, 100]
+	assert(not game._apply_character_pack(pack, game.FRIENDS))
+	assert(game.character_names == ["Hero 1", "Hero 2", "Hero 3"], "Falha de validação não pode aplicar uma troca parcial.")
+	game._load_default_characters()
+	assert(game.character_names == ["Princesa", "Ursinho", "Cavaleiro"])
+	game.sprites = original_sprites
+	game.character_names = original_names
+	game.character_roles = original_roles
 	for sprite in game.sprites:
 		assert(sprite.get_width() > 0 and sprite.get_height() > 0)
 	# Mouse e toque: cantos, cabeçalho, centro e margem inferior são alvos.
