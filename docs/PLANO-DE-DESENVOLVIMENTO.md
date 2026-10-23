@@ -6,7 +6,7 @@ Criar projeto Godot 2D com dados genéricos, sem dependência de rede. **Conclu�
 
 ## 1. Escolha acessível de letras
 
-Mostrar palavra, imagem, duas pistas, dois alvos grandes, personagem provisório, avanço da palavra, repetição após erro e alternância da resposta correta. **Concluído quando:** uma palavra pode ser completada por toques no desktop e em um tablet Android.
+Mostrar palavra, imagem, duas pistas verticais, duas metades completas de toque e personagem ilustrado, avanço da palavra, repetição após erro e alternância da resposta correta. **Concluído quando:** uma palavra pode ser completada por toques no desktop e em um tablet Android.
 
 ## 2. Teste no tablet real
 
@@ -36,3 +36,8 @@ Sincronização automática opcional, distribuição pelo domínio ou Google Pla
 4. Testar a fixação de tela e guardar os PINs de administração e saída.
 
 Godot é a única ferramenta de criação necessária agora. Blender não é necessário para o protótipo 2D. Android SDK e Java serão configurados quando formos gerar o APK.
+
+
+## Atualização da versão 0.2
+
+Corrida vertical, toque nas metades completas, personagens e cenário novos, música, efeitos de acerto, salto e estrelas implementados e verificados no computador. As etapas de validação no tablet, conteúdo personalizado, fonemas, redução de efeitos e volumes independentes continuam pendentes.

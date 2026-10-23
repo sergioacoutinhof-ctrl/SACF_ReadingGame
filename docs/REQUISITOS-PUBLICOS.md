@@ -1,4 +1,4 @@
-# Jogo de Leitura — requisitos públicos (v0.1)
+# Jogo de Leitura — requisitos públicos (v0.2)
 
 Este documento descreve o produto sem dados pessoais. Perfis, fotografias, gravações e palavras particulares de cada família são conteúdo privado configurado no aparelho.
 
@@ -10,8 +10,8 @@ Criar um jogo de alfabetização para tablets Android em que a criança pratica 
 
 1. A criança escolhe um de três personagens ilustrados.
 2. Uma imagem e uma voz apresentam a palavra a formar. Nas fases iniciais, a palavra completa aparece como pista.
-3. O cenário se move como uma corrida lateral. Duas letras aparecem em pistas distintas: uma é a próxima letra correta e a outra é uma alternativa.
-4. A criança toca em uma de duas áreas grandes. O personagem se desloca para a pista escolhida e coleta a letra.
+3. O cenário se move como uma corrida vertical, com a pista vindo de cima para baixo e a tela em paisagem. Duas letras aparecem em pistas distintas: uma é a próxima letra correta e a outra é uma alternativa.
+4. A criança toca em qualquer altura da metade esquerda ou direita da tela, com cores distintas e uma linha central neutra. O personagem se desloca para a pista escolhida e coleta a letra.
 5. A aproximação desacelera para permitir a escolha. Se não houver toque, a mesma etapa reaparece sem penalidade.
 6. Um acerto acrescenta a letra à palavra em construção, oferece feedback visual breve e reproduz o som da letra.
 7. Ao terminar a palavra, o jogo mostra a grafia completa, pronuncia a palavra e faz uma comemoração curta.
@@ -34,7 +34,7 @@ Exemplo genérico: para `BOLA`, o painel começa em `_ _ _ _`. A primeira escolh
 
 ## Acessibilidade
 
-- Duas áreas de toque grandes, com tamanho e posição ajustáveis.
+- Duas metades completas da tela como áreas de toque, com delimitação visual clara. Ajustes de tamanho e posição serão disponibilizados ao responsável.
 - Nenhuma ação essencial do primeiro protótipo depende de arrastar, pinçar, pressionar longamente, tocar duas vezes ou acertar alvos pequenos.
 - Velocidade da cena, desaceleração e janela de escolha ajustáveis.
 - Texto grande, contraste forte e animações que não escondam as alternativas.
