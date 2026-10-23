@@ -35,7 +35,7 @@ Sincronização automática opcional, distribuição pelo domínio ou Google Pla
 3. Separar fotos e gravar vozes para o conteúdo privado, sem enviá-las ao GitHub público.
 4. Testar a fixação de tela e guardar os PINs de administração e saída.
 
-Godot é a única ferramenta de criação necessária agora. Blender não é necessário para o protótipo 2D. Android SDK e Java serão configurados quando formos gerar o APK.
+Godot é a única ferramenta de criação necessária agora. Blender não é necessário para o protótipo 2D. Android SDK e Java já foram configurados para gerar o primeiro APK de teste.
 
 
 ## Atualização da versão 0.2
@@ -46,3 +46,7 @@ Corrida vertical, toque nas metades completas, personagens e cenário novos, mú
 ## Atualização da versão 0.3
 
 Bônus de plataforma de 15 segundos após cada palavra, inclusive a última. Corrida automática, salto com toque em toda a tela, plataformas baixas, estrelas extras e três perfis de animação. O retorno às letras é automático. Temporização, aterrissagem, tolerância de toque e fluxo completo verificados no computador; ritmo e conforto dos saltos ainda devem ser observados no tablet.
+
+## Atualização da versão 0.3.2
+
+APK de teste Android exportado e assinado, com ARM de 32 e 64 bits e perfis genérico/personalizado. Ferramentas de exportação instaladas no computador. Conferência do pacote feita antes da entrega; instalação, fluidez e voz no tablet real aguardam o primeiro teste.

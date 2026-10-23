@@ -18,7 +18,7 @@ Jogo de alfabetização 2D para tablets Android. A criança escolhe uma princesa
 
 No Windows, a voz é preparada como áudio local em segundo plano e reproduzida pelo jogo, evitando o bloqueio do reprodutor de voz do sistema.
 
-O editor de conteúdo, as gravações de fonemas, a progressão adaptativa, os volumes separados, a redução de efeitos e o instalador Android ainda fazem parte das próximas etapas.
+O editor de conteúdo, as gravações de fonemas, a progressão adaptativa, os volumes separados e a redução de efeitos ainda fazem parte das próximas etapas. Um APK de teste Android já pode ser exportado.
 
 ## Abrir no computador
 
@@ -29,6 +29,10 @@ O editor de conteúdo, as gravações de fonemas, a progressão adaptativa, os v
 5. A tecla **M** liga ou desliga o áudio completo no computador.
 
 A direção da corrida é vertical; a tela continua em formato paisagem para deixar as duas áreas amplas. A validação de alcance e ritmo no tablet real ainda está pendente.
+
+## Instalar no tablet
+
+Veja o [passo a passo de instalação e exportação Android](docs/INSTALAR-NO-ANDROID.md). Há perfis separados para os personagens genéricos e para o pacote local personalizado. A primeira exportação contém ARM de 32 e 64 bits; a validação no aparelho real continua pendente.
 
 ## Documentos e verificação
 

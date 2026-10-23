@@ -2,8 +2,10 @@
 .godot/
 *.tmp
 *.apk
+*.apk.idsig
 *.aab
 
 # Family photos, voices and local settings never belong in this public repo.
 private/
 *.keystore
+*.jks

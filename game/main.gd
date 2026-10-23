@@ -347,8 +347,14 @@ func _speak(value: String) -> void:
 		return
 	if OS.get_name() == "Windows":
 		sound.narrator.speak(value)
-	elif voice_id != "":
-		DisplayServer.tts_speak(value.to_lower(), voice_id, 75, 1.0, 0.85, 0, true)
+	elif DisplayServer.get_name() != "headless":
+		# A síntese de fala do Android pode terminar de iniciar depois de _ready().
+		if voice_id.is_empty():
+			var voices := DisplayServer.tts_get_voices_for_language("pt")
+			if not voices.is_empty():
+				voice_id = voices[0]
+		if not voice_id.is_empty():
+			DisplayServer.tts_speak(value.to_lower(), voice_id, 75, 1.0, 0.85, 0, true)
 
 
 func _to_design(screen_position: Vector2) -> Vector2:
