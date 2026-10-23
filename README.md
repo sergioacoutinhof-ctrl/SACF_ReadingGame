@@ -11,6 +11,8 @@ Jogo de alfabetização 2D para tablets Android. A criança escolhe uma princesa
 - Letras grandes, palavra completa como pista e marcação das letras já coletadas.
 - Personagens e cenário ilustrados, salto ao coletar, estrelas, partículas e comemoração de palavra completa.
 - Trilha suave e efeitos musicais originais, reproduzidos offline.
+- Ao completar cada palavra, corrida bônus de 15 segundos com plataformas, salto por toque em qualquer lugar e estrelas extras. Depois, retorno automático às letras.
+- Passos e pulos com movimentos diferentes para ursinho, princesa e cavaleiro, inclusive nos pacotes locais.
 - Um toque é aceito por animação; não responder oferece outra oportunidade sem registrar erro.
 - Conteúdo público genérico: BOLA, CASA e PATO.
 
@@ -21,7 +23,8 @@ O editor de conteúdo, as gravações de fonemas, a progressão adaptativa, os v
 1. Importe `game/project.godot` no [Godot 4.7.2 Standard](https://godotengine.org/download/archive/4.7.2-stable/).
 2. Execute com **F5**.
 3. Escolha um personagem. Durante a corrida, clique ou toque em qualquer altura da metade correspondente à letra.
-4. A tecla **M** liga ou desliga o áudio completo no computador.
+4. No bônus, toque em qualquer lugar para pular; a barra indica o tempo até a próxima palavra. No computador, a barra de espaço também pula.
+5. A tecla **M** liga ou desliga o áudio completo no computador.
 
 A direção da corrida é vertical; a tela continua em formato paisagem para deixar as duas áreas amplas. A validação de alcance e ritmo no tablet real ainda está pendente.
 
@@ -31,17 +34,21 @@ A direção da corrida é vertical; a tela continua em formato paisagem para dei
 - [Plano de desenvolvimento](docs/PLANO-DE-DESENVOLVIMENTO.md)
 - [Arte, prompts, áudio e licença da fonte](docs/ARTE-E-AUDIO.md)
 - [Pacotes locais de personagens](docs/PERSONAGENS-LOCAIS.md)
+- [Corrida bônus de plataforma](docs/BONUS-DE-PLATAFORMA.md)
 
 Teste de lógica e acessibilidade no Godot:
 
 ```text
 godot --headless --path game --script res://tests/smoke.gd
+godot --headless --path game --script res://tests/bonus.gd
 ```
 
-Capturas reais de seleção, corrida, coleta, progresso e conclusão, com janela gráfica:
+Capturas reais de seleção, letras, coleta, conclusão, bônus dos três personagens e retorno às letras, com janela gráfica. Use um destino fora de game/ para evitar importar as capturas como recursos:
 
 ```text
 godot --path game --script res://tests/visual_preview.gd -- --output-dir=CAMINHO_ABSOLUTO
+# Para documentação pública, usar sempre os personagens genéricos:
+godot --path game --script res://tests/visual_preview.gd -- --output-dir=CAMINHO_ABSOLUTO --generic-characters
 ```
 
 ## Privacidade

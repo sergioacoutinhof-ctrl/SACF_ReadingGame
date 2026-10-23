@@ -41,3 +41,8 @@ Godot é a única ferramenta de criação necessária agora. Blender não é nec
 ## Atualização da versão 0.2
 
 Corrida vertical, toque nas metades completas, personagens e cenário novos, música, efeitos de acerto, salto e estrelas implementados e verificados no computador. As etapas de validação no tablet, conteúdo personalizado, fonemas, redução de efeitos e volumes independentes continuam pendentes.
+
+
+## Atualização da versão 0.3
+
+Bônus de plataforma de 15 segundos após cada palavra, inclusive a última. Corrida automática, salto com toque em toda a tela, plataformas baixas, estrelas extras e três perfis de animação. O retorno às letras é automático. Temporização, aterrissagem, tolerância de toque e fluxo completo verificados no computador; ritmo e conforto dos saltos ainda devem ser observados no tablet.

@@ -6,6 +6,8 @@
 - `game/assets/art/meadow.png`: cenário de jardim e castelo.
 - `game/assets/audio/collect.wav`: três notas ascendentes ao coletar.
 - `game/assets/audio/complete.wav`: pequena frase musical ao completar a palavra.
+- `game/assets/audio/bonus.wav`: trilha original mais animada para a corrida de prêmio.
+- `game/assets/audio/jump.wav`: pequeno efeito ascendente ao saltar no bônus.
 - `game/assets/audio/retry.wav`: indicação suave de nova tentativa.
 - `game/assets/audio/meadow.wav`: trilha suave de doze segundos.
 - `game/assets/fonts/Fredoka.ttf`: fonte Fredoka, distribuída com a [SIL Open Font License](../game/assets/fonts/OFL.txt), obtida do [repositório oficial Google Fonts](https://github.com/google/fonts/tree/main/ofl/fredoka).
@@ -33,3 +35,8 @@ Parâmetro: `transparent_background=false`.
 A próxima letra fica em uma posição dourada no painel superior; as letras coletadas ficam verdes e recebem uma marca. A escolha desloca o personagem para a faixa, com salto, estrelas e um som breve no acerto. A música fica em volume inferior aos efeitos e à voz. A tecla M silencia música, efeitos e voz; controles separados no painel de responsáveis serão implementados em etapa posterior.
 
 A voz automática do protótipo ainda lê o nome da letra. O som fonêmico validado para alfabetização depende da etapa de gravação e conteúdo.
+
+
+## Animações e áudio do bônus (v0.3)
+
+A corrida usa uma malha simples sobre o mesmo atlas: passos alternados, inclinação e salto. O ursinho tem passadas saltitantes e poeirinha; a princesa tem movimento mais leve de saia e brilho; o cavaleiro tem passos curtos e firmes com rastros de velocidade. O rosto e os traços do pacote local são preservados. Durante os 15 segundos, uma trilha original mais animada substitui a música suave; ao voltar às letras, a trilha habitual retorna.

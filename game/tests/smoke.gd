@@ -80,10 +80,37 @@ func _run() -> void:
 		game._finish_choice()
 	assert(game.mode == game.WORD_DONE and game.star_count == 4)
 	assert(game.sound.complete.get_length() > game.sound.collect.get_length())
-	game._process(3.3)
+	var errors_before_bonus: int = game.wrong_choice_count
+	var missed_before_bonus: int = game.no_response_count
+	game._process(game.WORD_CELEBRATION + 0.01)
+	assert(game.mode == game.BONUS and game.word_index == 0)
+	# O centro da tela e o cabeçalho também comandam o salto.
+	var bonus_touch := InputEventScreenTouch.new()
+	bonus_touch.pressed = true
+	bonus_touch.position = viewport_size / 2.0
+	game._input(bonus_touch)
+	game._process(0.05)
+	assert(game.bonus.total_jumps == 1 and game.bonus.feet_y < game.bonus.GROUND_Y)
+	game._process(14.94)
+	assert(game.mode == game.BONUS, "O prêmio deve durar os 15 segundos completos.")
+	game._process(0.02)
 	assert(game.mode == game.PLAY and game.word_index == 1)
-	assert(game.letter_index == 0)
+	assert(game.letter_index == 0 and game.star_count == 4)
+	assert(game.wrong_choice_count == errors_before_bonus and game.no_response_count == missed_before_bonus)
+	assert(game._bonus_animation_profile("bear") != game._bonus_animation_profile("princess"))
+	assert(game._bonus_animation_profile("knight") != game._bonus_animation_profile("princess"))
+	# Toda palavra, inclusive a última, deve conceder o bônus antes de avançar.
+	for word_number in range(1, game.words.size()):
+		for letter in game._current_word().length():
+			game._choose(game.correct_lane)
+			game._finish_choice()
+		assert(game.mode == game.WORD_DONE)
+		game._process(game.WORD_CELEBRATION + 0.01)
+		assert(game.mode == game.BONUS and game.bonus.age == 0)
+		game._process(15.0)
+	assert(game.mode == game.SESSION_DONE)
+	assert(game.star_count == 12)
 	game.free()
 	await process_frame
-	print("SMOKE_OK: metades completas, mouse/toque, proteção contra repetição, corrida vertical, áudio, partículas e progressão")
+	print("SMOKE_OK: metades completas, mouse/toque, proteção contra repetição, corrida vertical, áudio, partículas e palavra → bônus → próxima palavra")
 	quit()

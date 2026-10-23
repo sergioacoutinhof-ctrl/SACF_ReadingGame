@@ -7,6 +7,9 @@ var collect := preload("res://assets/audio/collect.wav")
 var complete := preload("res://assets/audio/complete.wav")
 var retry := preload("res://assets/audio/retry.wav")
 var soundtrack := preload("res://assets/audio/meadow.wav")
+var jump := preload("res://assets/audio/jump.wav")
+var bonus_track := preload("res://assets/audio/bonus.wav")
+var bonus_active := false
 
 
 func _ready() -> void:
@@ -47,10 +50,30 @@ func play_retry() -> void:
 	_play(retry)
 
 
-func _play(stream: AudioStream) -> void:
+func set_bonus(active: bool) -> void:
+	if active == bonus_active:
+		return
+	bonus_active = active
+	var resume := music.playing
+	music.stop()
+	music.stream = bonus_track if active else soundtrack
+	if resume and not muted:
+		music.play()
+
+
+func play_jump() -> void:
+	_play(jump)
+
+
+func play_bonus_star() -> void:
+	_play(collect)
+
+
+func _play(stream: AudioStream, pitch: float = 1.0) -> void:
 	if muted:
 		return
 	effects.stream = stream
+	effects.pitch_scale = pitch
 	effects.play()
 
 

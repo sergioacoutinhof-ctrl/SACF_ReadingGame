@@ -1,12 +1,15 @@
 extends SceneTree
 
 var output_dir := ""
+var generic_characters := false
 
 
 func _initialize() -> void:
 	for argument in OS.get_cmdline_user_args():
 		if argument.begins_with("--output-dir="):
 			output_dir = argument.trim_prefix("--output-dir=")
+		if argument == "--generic-characters":
+			generic_characters = true
 	call_deferred("_run")
 
 
@@ -26,6 +29,8 @@ func _run() -> void:
 	await process_frame
 	game.set_process(false)
 	game.voice_id = ""
+	if generic_characters:
+		game._load_default_characters()
 	game.elapsed = 0.2
 	await _capture("selection")
 	game._start_session()
@@ -40,7 +45,17 @@ func _run() -> void:
 	game.mode = game.WORD_DONE
 	game.word_done_age = 0.7
 	await _capture("word-complete")
+	for index in 3:
+		game.character_index = index
+		game.mode = game.WORD_DONE
+		game._start_bonus()
+		game._process(1.0)
+		game.bonus.request_jump()
+		game._process(0.30)
+		await _capture("bonus-" + game.character_roles[index])
+	game._process(15.0)
+	await _capture("back-to-letters")
 	game.free()
 	await create_timer(0.15).timeout
-	print("VISUAL_OK: five screenshots rendered by Godot")
+	print("VISUAL_OK: letras, três personagens no bônus e retorno renderizados pelo Godot")
 	quit()

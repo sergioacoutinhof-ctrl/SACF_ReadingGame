@@ -6,6 +6,9 @@ const SELECT := 0
 const PLAY := 1
 const WORD_DONE := 2
 const SESSION_DONE := 3
+const BONUS := 4
+const WORD_CELEBRATION := 1.8
+const BONUS_RUN = preload("res://bonus_run.gd")
 const ALPHABET := "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 const FEEDBACK_TIME := 1.1
 const INK := Color("254956")
@@ -47,6 +50,8 @@ var character_roles: Array[String] = []
 var particles: Array[Dictionary] = []
 var panels: Dictionary = {}
 var sound: Node
+var bonus := BONUS_RUN.new()
+var bonus_total_stars := 0
 
 
 func _ready() -> void:
@@ -165,16 +170,10 @@ func _process(delta: float) -> void:
 				_make_pair()
 	elif mode == WORD_DONE:
 		word_done_age += delta
-		if word_done_age >= 3.2:
-			word_index += 1
-			if word_index >= words.size():
-				mode = SESSION_DONE
-				_speak("Muito bem! Você completou as palavras.")
-			else:
-				letter_index = 0
-				mode = PLAY
-				_make_pair()
-				_speak(_current_word())
+		if word_done_age >= WORD_CELEBRATION:
+			_start_bonus()
+	elif mode == BONUS:
+		_process_bonus(delta)
 	queue_redraw()
 
 
@@ -182,6 +181,9 @@ func _input(event: InputEvent) -> void:
 	if event is InputEventKey and event.pressed and not event.echo:
 		if event.keycode == KEY_M:
 			sound.toggle_mute()
+			return
+		if mode == BONUS and event.keycode == KEY_SPACE:
+			bonus.request_jump()
 			return
 	var pressed := false
 	var screen_position := Vector2.ZERO
@@ -192,6 +194,9 @@ func _input(event: InputEvent) -> void:
 		pressed = true
 		screen_position = event.position
 	if not pressed:
+		return
+	if mode == BONUS:
+		bonus.request_jump()
 		return
 	# TODA a metade da tela é alvo, inclusive cabeçalho e margens.
 	if mode == PLAY:
@@ -220,6 +225,8 @@ func _start_session() -> void:
 	no_response_count = 0
 	wrong_choice_count = 0
 	star_count = 0
+	bonus_total_stars = 0
+	bonus.reset()
 	feedback_age = 0.0
 	selected_lane = -1
 	runner_lane = -1
@@ -227,6 +234,7 @@ func _start_session() -> void:
 	particles.clear()
 	mode = PLAY
 	_make_pair()
+	sound.set_bonus(false)
 	sound.start_music()
 	_speak(_current_word())
 
@@ -289,6 +297,50 @@ func _finish_choice() -> void:
 		_make_pair()
 
 
+func _start_bonus() -> void:
+	if mode != WORD_DONE:
+		return
+	mode = BONUS
+	bonus.reset(effect_rng.randi())
+	particles.clear()
+	selected_lane = -1
+	feedback_age = 0.0
+	sound.set_bonus(true)
+	_speak("Hora de brincar! Toque para pular.")
+
+
+func _process_bonus(delta: float) -> void:
+	var previous_jumps: int = bonus.total_jumps
+	var pickups: Array[Vector2] = bonus.advance(delta)
+	if bonus.total_jumps > previous_jumps:
+		sound.play_jump()
+		_burst(Vector2(bonus.RUNNER_X - 15.0, bonus.feet_y), 5)
+	for point in pickups:
+		_burst(point, 12)
+	if not pickups.is_empty():
+		bonus_total_stars += pickups.size()
+		sound.play_bonus_star()
+	if bonus.is_finished():
+		_advance_word()
+
+
+func _advance_word() -> void:
+	sound.set_bonus(false)
+	particles.clear()
+	word_index += 1
+	if word_index >= words.size():
+		mode = SESSION_DONE
+		_speak("Muito bem! Você completou as palavras.")
+	else:
+		letter_index = 0
+		selected_lane = -1
+		runner_lane = -1
+		runner_x = WIDTH / 2.0
+		mode = PLAY
+		_make_pair()
+		_speak(_current_word())
+
+
 func _speak(value: String) -> void:
 	if voice_id != "" and not sound.muted:
 		DisplayServer.tts_speak(value.to_lower(), voice_id, 75, 1.0, 0.85, 0, true)
@@ -319,6 +371,8 @@ func _draw() -> void:
 			_draw_word_done()
 		SESSION_DONE:
 			_draw_session_done()
+		BONUS:
+			_draw_bonus()
 	draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
 
 
@@ -425,7 +479,7 @@ func _draw_play() -> void:
 
 func _letter_y() -> float:
 	var fraction := clampf(pair_age / 2.8, 0.0, 1.0)
-	return lerpf(295.0, 428.0, 1.0 - pow(1.0 - fraction, 3.0))
+	return lerpf(325.0, 428.0, 1.0 - pow(1.0 - fraction, 3.0))
 
 
 func _slot_rect(index: int) -> Rect2:
@@ -478,8 +532,136 @@ func _draw_word_done() -> void:
 	_text(_current_word(), Vector2(640, 463), 77, INK, true, true)
 	for index in 3:
 		_star(Vector2(555 + index * 85, 534), 27 + sin(word_done_age * 3.0 + index) * 3.0, GOLD)
-	_text("Mais uma palavra na sua aventura", Vector2(640, 597), 23, TEAL, true, true)
+	_text("Você ganhou 15 segundos para brincar!", Vector2(640, 597), 23, TEAL, true, true)
 	_draw_particles()
+
+
+func _draw_bonus() -> void:
+	# Parallax e cenário próprio deixam claro que este é o prêmio da palavra.
+	var drift := fmod(bonus.distance * 0.035, 120.0)
+	draw_texture_rect(BACKGROUND, Rect2(-drift, -4, WIDTH + 140, HEIGHT + 8), false)
+	for index in 5:
+		var x := fposmod(index * 370.0 - bonus.distance * 0.28, 1680.0) - 150.0
+		draw_circle(Vector2(x, 581), 84, Color("b2d5a7"))
+		draw_circle(Vector2(x + 70, 591), 63, Color("c6dfae"))
+	draw_rect(Rect2(0, 600, WIDTH, 120), Color("dcad84"))
+	draw_rect(Rect2(0, 624, WIDTH, 96), Color("edc69c"))
+	draw_rect(Rect2(0, 596, WIDTH, 24), Color("6eb582"))
+	draw_rect(Rect2(0, 596, WIDTH, 8), Color("a8d891"))
+	for index in range(-1, 16):
+		var x := index * 96.0 - fposmod(bonus.distance, 96.0)
+		draw_circle(Vector2(x + 25, 615), 9, Color("6eb582"))
+		draw_circle(Vector2(x + 76, 618), 7, Color("6eb582"))
+		_panel(Rect2(x + 5, 645, 52, 12), Color("d9aa81"), Color.TRANSPARENT, 6)
+		_panel(Rect2(x + 51, 681, 30, 9), Color("e0b68d"), Color.TRANSPARENT, 4)
+	for platform in bonus.platforms:
+		var screen := Rect2(platform.position - Vector2(bonus.distance, 0), platform.size)
+		if screen.end.x < -20 or screen.position.x > WIDTH + 20:
+			continue
+		_panel(screen, Color("e9c79b"), Color("d8b184"), 12, 2)
+		_panel(Rect2(screen.position - Vector2(3, 8), Vector2(screen.size.x + 6, 16)), Color("9acd8a"), Color.TRANSPARENT, 8)
+		for step in 4:
+			draw_circle(screen.position + Vector2(20 + step * 49, 8), 5, Color("80ba7d"))
+		_polyline([screen.position + Vector2(27, 27), screen.position + Vector2(29, 44), screen.position + Vector2(35, 49)], Color("a1c590"), 3)
+	for star in bonus.stars:
+		var position: Vector2 = star["position"] - Vector2(bonus.distance, 0)
+		if star["collected"] or position.x < -30 or position.x > WIDTH + 30:
+			continue
+		position.y += sin(bonus.age * 3.5 + position.x * 0.01) * 4.0
+		draw_circle(position, 27, Color(1.0, 0.94, 0.61, 0.22))
+		_star(position + Vector2(0, 2), 19, Color("d99830"))
+		_star(position, 18, GOLD, -PI / 2.0 + sin(bonus.age * 2.0) * 0.08)
+		draw_circle(position + Vector2(-4, -6), 3, Color("fff7ca"))
+	_draw_bonus_character()
+	_draw_particles()
+	_panel(Rect2(25, 20, 1230, 112), Color("fffdf3"), Color.WHITE, 26, 3)
+	_text("Hora de brincar!", Vector2(59, 66), 37, TEAL, false, true)
+	_text("Você completou: " + _current_word(), Vector2(60, 98), 22, INK, false, true)
+	_panel(Rect2(882, 40, 157, 59), Color("fff0bf"), Color.TRANSPARENT, 24)
+	_star(Vector2(913, 69), 16, Color("e4aa26"))
+	_text(str(bonus.collected), Vector2(982, 83), 33, INK, true, true)
+	_panel(Rect2(1058, 40, 162, 59), Color("eee2f7"), Color.TRANSPARENT, 24)
+	draw_arc(Vector2(1088, 69), 13, 0, TAU, 32, PURPLE, 2.5, true)
+	_polyline([Vector2(1088, 59), Vector2(1088, 69), Vector2(1095, 73)], PURPLE, 2.5)
+	_text("%d s" % ceili(bonus.remaining()), Vector2(1157, 82), 29, INK, true, true)
+	_panel(Rect2(59, 115, 1161, 7), Color("e4ece2"), Color.TRANSPARENT, 3)
+	var bar_width: float = 1161.0 * clampf(bonus.remaining() / bonus.DURATION, 0, 1)
+	if bar_width > 1:
+		_panel(Rect2(59, 115, bar_width, 7), Color("86c9b4"), Color.TRANSPARENT, 3)
+	_panel(Rect2(280, 653, 720, 48), Color("fff9e9"), Color.TRANSPARENT, 23)
+	var caption := "TOQUE EM QUALQUER LUGAR PARA PULAR"
+	if bonus.remaining() < 2.2:
+		caption = "JÁ VAMOS PARA A PRÓXIMA PALAVRA"
+		if word_index + 1 >= words.size():
+			caption = "QUE AVENTURA! VOCÊ CONSEGUIU!"
+	_text(caption, Vector2(640, 684), 23, INK, true, true)
+
+
+func _draw_bonus_character() -> void:
+	var sprite := sprites[character_index]
+	var role := character_roles[character_index]
+	var profile := _bonus_animation_profile(role)
+	var phase := bonus.age * profile.x
+	var floor_y: float = bonus.feet_y if bonus.grounded else bonus.GROUND_Y
+	var shadow_radius := 46.0 - minf(18.0, (bonus.GROUND_Y - bonus.feet_y) * 0.08)
+	var shadow := PackedVector2Array()
+	for step in 28:
+		var angle := TAU * step / 28.0
+		shadow.append(Vector2(bonus.RUNNER_X + cos(angle) * shadow_radius, floor_y - 1.0 + sin(angle) * 7))
+	draw_colored_polygon(shadow, Color(0.14, 0.30, 0.24, 0.17))
+	var feet := Vector2(bonus.RUNNER_X, bonus.feet_y)
+	for index in 3:
+		var trail_x := feet.x - 65.0 - index * 25.0 - fmod(bonus.age * 70.0, 22.0)
+		var trail_y := feet.y - 12.0 - index * 4.0
+		if role == "princess":
+			_star(Vector2(trail_x, trail_y), 5.0 - index, Color(1, 0.84, 0.51, 0.5 - index * 0.1))
+		elif role == "bear":
+			draw_circle(Vector2(trail_x, trail_y), 5.0 - index, Color(1, 0.96, 0.82, 0.45 - index * 0.1))
+		else:
+			draw_line(Vector2(trail_x - 12, trail_y), Vector2(trail_x + 5, trail_y), Color(0.95, 1, 1, 0.55 - index * 0.1), 3, true)
+	var height := bonus.PLAYER_HEIGHT
+	var width := height * sprite.get_width() / sprite.get_height()
+	# Malha simples: rosto estável, corpo inclinado e passos alternados.
+	# Usa o mesmo atlas, inclusive quando há um pacote local personalizado.
+	for row in 8:
+		for column in 2:
+			var u0 := column / 2.0
+			var u1 := (column + 1) / 2.0
+			var v0 := row / 8.0
+			var v1 := (row + 1) / 8.0
+			var coordinates := [Vector2(u0, v0), Vector2(u1, v0), Vector2(u1, v1), Vector2(u0, v1)]
+			var points := PackedVector2Array()
+			var uvs := PackedVector2Array()
+			for uv in coordinates:
+				points.append(_bonus_vertex(uv, feet, Vector2(width, height), profile, phase))
+				uvs.append((sprite.region.position + uv * sprite.region.size) / sprite.atlas.get_size())
+			draw_polygon(points, PackedColorArray([Color.WHITE]), uvs, sprite.atlas)
+
+
+func _bonus_animation_profile(role: String) -> Vector3:
+	match role:
+		"bear":
+			return Vector3(13.5, 7.5, 8.5)
+		"princess":
+			return Vector3(10.5, 4.5, 4.5)
+		_:
+			return Vector3(11.5, 3.0, 6.0)
+
+
+func _bonus_vertex(uv: Vector2, feet: Vector2, dimensions: Vector2, profile: Vector3, phase: float) -> Vector2:
+	var ground_motion: float = 1.0 if bonus.grounded else 0.15
+	var leg := pow(clampf((uv.y - 0.59) / 0.41, 0.0, 1.0), 1.4)
+	var side := uv.x * 2.0 - 1.0
+	var lift := maxf(0, sin(phase + (PI if side < 0 else 0)))
+	var stride := sin(phase) * side * profile.z * leg * ground_motion
+	var bob := absf(sin(phase)) * profile.y * ground_motion
+	var local := Vector2((uv.x - 0.5) * dimensions.x, (uv.y - 1.0) * dimensions.y)
+	local.x += (1.0 - uv.y) * 10.0 + stride
+	local.y -= bob + lift * 7.0 * leg * ground_motion
+	if not bonus.grounded:
+		local.x *= 1.04
+		local.y *= 0.98
+	return feet + local
 
 
 func _draw_session_done() -> void:

@@ -1,4 +1,4 @@
-# Jogo de Leitura — requisitos públicos (v0.2)
+# Jogo de Leitura — requisitos públicos (v0.3)
 
 Este documento descreve o produto sem dados pessoais. Perfis, fotografias, gravações e palavras particulares de cada família são conteúdo privado configurado no aparelho.
 
@@ -15,7 +15,8 @@ Criar um jogo de alfabetização para tablets Android em que a criança pratica 
 5. A aproximação desacelera para permitir a escolha. Se não houver toque, a mesma etapa reaparece sem penalidade.
 6. Um acerto acrescenta a letra à palavra em construção, oferece feedback visual breve e reproduz o som da letra.
 7. Ao terminar a palavra, o jogo mostra a grafia completa, pronuncia a palavra e faz uma comemoração curta.
-8. A partida termina após um bloco pequeno de palavras, com opção de iniciar outra.
+8. Cada palavra completa libera uma corrida bônus de plataforma por 15 segundos. O personagem corre sozinho, e um toque em qualquer lugar comanda um salto. Estrelas extras e animações diferentes dos três personagens celebram o acerto.
+9. Depois do bônus, o jogo volta automaticamente à próxima palavra. A última palavra também concede o bônus antes de terminar a partida, com opção de iniciar outra.
 
 Exemplo genérico: para `BOLA`, o painel começa em `_ _ _ _`. A primeira escolha pode ser `B` ou `P`. Após escolher `B`, o painel mostra `B _ _ _`.
 
@@ -30,6 +31,7 @@ Exemplo genérico: para `BOLA`, o painel começa em `_ _ _ _`. A primeira escolh
 - Avançar automaticamente com base no desempenho, com controle manual de fase pelo responsável.
 - Nas primeiras fases, uma escolha incorreta repete a letra atual com feedback acolhedor. O reinício da palavra pode ser habilitado para fases posteriores.
 - Ausência de resposta não deve ser confundida com escolha incorreta.
+- O bônus é uma recompensa sem vidas, buracos ou penalidade por não coletar estrelas. Não exige pontuação mínima, nem altera os acertos ou erros de leitura.
 - Registrar acertos, escolhas incorretas, ausência de resposta e nível de pista para acompanhamento do responsável.
 
 ## Acessibilidade
@@ -40,6 +42,7 @@ Exemplo genérico: para `BOLA`, o painel começa em `_ _ _ _`. A primeira escolh
 - Texto grande, contraste forte e animações que não escondam as alternativas.
 - Música, voz e efeitos com controles de volume independentes; redução de efeitos visuais disponível.
 - A borda entre os dois alvos não deve transformar um toque ambíguo em resposta incorreta.
+- No bônus, toda a tela aceita o comando de pulo. Uma janela breve aproveita toques perto da aterrissagem, e toques repetidos no ar não provocam saltos extras.
 - O layout deve se adaptar a vários tamanhos de tablet Android e ser validado em aparelhos reais.
 
 ## Conteúdo e privacidade
@@ -70,6 +73,7 @@ Exemplo genérico: para `BOLA`, o painel começa em `_ _ _ _`. A primeira escolh
 7. Uma partida funciona com a internet desligada.
 8. Um pacote exportado de um tablet pode ser importado em outro.
 9. Alvos, ritmo e áudio podem ser ajustados em um aparelho real.
+10. Toda palavra completa oferece exatamente 15 segundos de corrida bônus, com movimento próprio do personagem selecionado e retorno automático às letras ou ao encerramento.
 
 ## Fora do primeiro protótipo
 
