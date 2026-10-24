@@ -1,4 +1,4 @@
-# Palavras, fotos e proteção de saída — v0.4
+# Palavras, fotos e proteção de saída — v0.4.1
 
 ## Conteúdo inicial
 
@@ -13,12 +13,13 @@ Cada rodada usa seis palavras habilitadas. Ao terminar a rodada, o próximo bloc
 Na primeira abertura, crie e confirme um PIN de seis números. Não há PIN padrão. O mesmo PIN abre a área dos responsáveis e autoriza a saída pelo aplicativo.
 
 - Na seleção de personagem, toque em **Responsáveis**.
-- Durante a partida, use **Voltar** no Android ou **Esc** no computador. A partida pausa e pede o PIN.
+- Durante a partida, segure **PAIS / SAIR · SEGURE** no canto inferior direito por 1,2 segundo com um dedo. A partida pausa e pede o PIN. **Voltar** no Android e **Esc** no computador também abrem o pedido de PIN.
+- Após o PIN, escolha **Continuar jogando**, **Configurações e fotos** ou **Sair do jogo**.
 - Em **Palavras e fotos**, selecione uma palavra, edite sua grafia, habilite/desabilite ou exclua. Pelo menos uma precisa permanecer habilitada.
 - Use **Nova palavra**, digite o nome e salve antes de escolher a foto.
 - **Escolher foto** abre o seletor do sistema. Uma cópia central quadrada de 512 × 512 é salva como JPEG no armazenamento privado do aplicativo. O original não é modificado. A foto substitui a ilustração durante a leitura e na comemoração.
 - **Imagem padrão** remove a cópia associada e restaura a ilustração.
-- Para sair, entre com o PIN e use **Liberar e sair do jogo**.
+- Para sair, entre com o PIN e use **Sair do jogo**. O aplicativo aguarda o Android liberar a tela antes de fechar.
 
 O perfil, o PIN com salt e resumo criptográfico e as cópias das fotos ficam em `user://family/`. O PIN não é guardado em texto. Cinco tentativas incorretas bloqueiam novas tentativas por 30 segundos durante essa execução. A troca de PIN exige acesso à área já autenticada. A exportação/importação do perfil entre aparelhos e a gravação de fonemas continuam pendentes.
 
@@ -30,8 +31,9 @@ O PIN do jogo protege suas telas e o comando de saída. Os botões Home/Recentes
 2. Ative **Fixação de app/tela** nas opções de Segurança.
 3. Ative **Pedir PIN ao desafixar**, **Bloquear ao liberar** ou a opção equivalente do fabricante.
 4. Volte ao jogo, entre na área dos responsáveis e confirme que ativou essa exigência nas opções do tablet.
-5. Toque em **Voltar a brincar** e aceite o aviso de fixação apresentado pelo Android. A interface só retoma quando o sistema informa a fixação ativa.
-6. Antes de entregar o tablet, teste Home, Recentes e o gesto de desafixar e confirme que pedem a senha do aparelho.
+5. Toque em **Brincar** e aceite o aviso de fixação apresentado pelo Android. A interface só retoma quando o sistema informa a fixação ativa.
+6. Nas próximas partidas, a escolha do personagem leva à confirmação de fixação e inicia o jogo automaticamente, sem outro PIN quando a proteção já está pronta.
+7. Antes de entregar o tablet, teste Home, Recentes e o gesto de desafixar e confirme que pedem a senha do aparelho.
 
 O botão **Segurança do tablet** abre as configurações do Android a partir da área autenticada. A leitura só começa no Android se há PIN do jogo, bloqueio seguro no aparelho, confirmação do responsável e fixação ativa. A confirmação do responsável é uma declaração de que ativou a opção; o aplicativo não altera nem comprova silenciosamente a configuração de senha ao desafixar.
 

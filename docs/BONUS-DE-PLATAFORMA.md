@@ -1,6 +1,6 @@
-# Bônus de plataforma — v0.4
+# Bônus de plataforma — v0.4.1
 
-Cada palavra completa libera até 15 segundos de corrida automática. Um toque em qualquer lugar faz pular. As letras da mesma palavra aparecem em ordem no cenário, inclusive letras repetidas e acentuadas; a criança precisa saltar para coletá-las. Cada coleta toca um som, explode partículas em forma de estrela e acende a letra correspondente no painel.
+Cada palavra completa libera até 15 segundos de corrida automática. Um toque em qualquer lugar faz pular. As letras da mesma palavra aparecem em ordem no cenário, inclusive letras repetidas e acentuadas; a criança precisa saltar para coletá-las. Cada coleta fala a letra e toca um som, explode partículas em forma de estrela e acende a letra correspondente no painel.
 
 Há até três buracos, visíveis antes da aproximação. Cair encerra a tentativa do bônus. Se todas as letras forem coletadas até o final, o jogo comemora a palavra completa; se faltar alguma, encerra a tentativa sem a vitória. Um resultado breve antecede a próxima palavra. A palavra que já foi formada na corrida de leitura continua concluída, e a queda não altera os registros de leitura.
 

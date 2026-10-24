@@ -18,6 +18,7 @@ var grounded := true
 var jump_buffer := 0.0
 var coyote := COYOTE_TIME
 var collected := 0
+var pickup_letters: Array[String] = []
 var total_jumps := 0
 var failed := false
 var word := "BOLA"
@@ -41,6 +42,7 @@ func reset(seed_value: int = 0, target_word: String = "BOLA", with_holes: bool =
 	platforms.clear()
 	holes.clear()
 	stars.clear()
+	pickup_letters.clear()
 	var random := RandomNumberGenerator.new()
 	random.seed = seed_value
 	var spacing := 2220.0 / maxf(1.0, word.length() - 1.0)
@@ -91,6 +93,7 @@ func has_floor(world_x: float) -> bool:
 
 func advance(delta: float) -> Array[Vector2]:
 	var pickups: Array[Vector2] = []
+	pickup_letters.clear()
 	if is_finished():
 		return pickups
 	var duration := minf(maxf(delta, 0.0), remaining())
@@ -142,4 +145,5 @@ func _step(delta: float, pickups: Array[Vector2]) -> void:
 		if not grounded and not star["collected"] and body.has_point(star["position"]):
 			star["collected"] = true
 			collected += 1
+			pickup_letters.append(str(star["letter"]))
 			pickups.append(star["position"] - Vector2(distance, 0))

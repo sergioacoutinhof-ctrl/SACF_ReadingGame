@@ -2,7 +2,7 @@
 
 ## Instalação no tablet
 
-O arquivo `Aventura-das-Letras-teste.apk` é o instalador. O tablet não precisa ter Godot, Java nem ferramentas de desenvolvimento.
+O arquivo `Aventura-das-Letras-v0.4.1.apk` é o instalador. O tablet não precisa ter Godot, Java nem ferramentas de desenvolvimento.
 
 1. Copie o APK para o tablet por cabo USB ou baixe pelo seu Google Drive particular.
 2. Abra o arquivo no aplicativo Arquivos/Downloads.
@@ -22,7 +22,7 @@ Esta versão inclui os dados do jogo e as músicas no próprio APK. A narração
 - Observar música, voz, fluidez e tempo confortável para escolher letras.
 - Se não instalar, anotar a mensagem e consultar **Configurações > Sobre o tablet** para obter modelo e versão do Android.
 
-O APK 0.4.0 contém ARM de 32 e 64 bits, usa OpenGL Compatibility, mantém a tela em paisagem e declara Android API 24 como mínimo. Isso amplia a cobertura; a execução precisa ser confirmada no aparelho real. O PIN do jogo protege a área dos responsáveis e a saída solicitada pelo aplicativo. Para os botões Home/Recentes, ative a fixação e a exigência de senha ao desafixar no Android, conforme [Palavras, fotos e PIN](PALAVRAS-FOTOS-E-PIN.md).
+O APK 0.4.1 contém ARM de 32 e 64 bits, usa OpenGL Compatibility, mantém a tela em paisagem e declara Android API 24 como mínimo. Isso amplia a cobertura; a execução precisa ser confirmada no aparelho real. O PIN do jogo protege a área dos responsáveis e a saída solicitada pelo aplicativo. Para os botões Home/Recentes, ative a fixação e a exigência de senha ao desafixar no Android, conforme [Palavras, fotos e PIN](PALAVRAS-FOTOS-E-PIN.md).
 
 ## Exportar novamente no computador
 

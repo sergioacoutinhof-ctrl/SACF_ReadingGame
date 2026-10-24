@@ -46,6 +46,8 @@ func _run() -> void:
 	game.parents.is_open = false
 	game.parents.cover.hide()
 	game.voice_id = ""
+	game.sound.toggle_mute()
+	game.sound.narrator.enabled = false
 	if generic_characters:
 		game._load_default_characters()
 		game.content.entries = game.content.entries.filter(func(entry: Dictionary): return not str(entry["image"]).begins_with("character:"))
@@ -78,6 +80,10 @@ func _run() -> void:
 	game.bonus.feet_y = 470
 	game.bonus.grounded = false
 	await _capture("bonus-letters-holes")
+	game.parent_pointer = 0
+	game.parent_hold_age = 0.7
+	await _capture("parent-access-hold")
+	game._clear_parent_hold()
 	game.bonus.failed = true
 	game.mode = game.BONUS_RESULT
 	await _capture("bonus-fall-result")
@@ -87,6 +93,8 @@ func _run() -> void:
 	await _capture("parent-pin")
 	# Prévia pública da configuração, sem criar PIN nem editar perfil real.
 	game.parents.authorized = true
+	game.parents._show_actions()
+	await _capture("parent-menu")
 	game.parents._show_words()
 	await _capture("word-photo-settings")
 	var preview_guard := PreviewAndroidGuard.new()

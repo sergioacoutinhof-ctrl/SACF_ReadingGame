@@ -10,10 +10,12 @@ var status_path := ""
 var worker_pid := -1
 var worker_started := 0
 var pending := ""
+var speech_queue: Array[String] = []
 var pending_started := 0
 var enabled := false
 var cached_streams: Dictionary = {}
 var played_count := 0
+var speech_active := false
 var poll_age := 0.0
 
 
@@ -21,6 +23,7 @@ func _ready() -> void:
 	player = AudioStreamPlayer.new()
 	player.volume_db = -2.5
 	add_child(player)
+	player.finished.connect(_speech_finished)
 	enabled = OS.get_name() == "Windows" and DisplayServer.get_name() != "headless"
 
 
@@ -70,17 +73,39 @@ func _add_text(texts: Array[String], value: String) -> void:
 		texts.append(normalized)
 
 
-func speak(value: String) -> void:
+func speak(value: String, interrupt: bool = true) -> void:
 	if not enabled or cache_dir.is_empty():
 		return
-	player.stop()
-	pending = value.strip_edges().to_lower()
+	if interrupt:
+		cancel()
+	speech_queue.append(value.strip_edges().to_lower())
+	_next_speech()
+
+
+func _next_speech() -> void:
+	if speech_active or not pending.is_empty() or speech_queue.is_empty():
+		return
+	pending = speech_queue.pop_front()
 	pending_started = Time.get_ticks_msec()
 	_try_pending()
 
 
+func _speech_finished() -> void:
+	if player.playing:
+		return
+	speech_active = false
+	# Esperar o sinal terminar antes de trocar o fluxo de áudio.
+	_next_speech.call_deferred()
+
+
+func is_speaking() -> bool:
+	return speech_active or not pending.is_empty() or not speech_queue.is_empty()
+
+
 func cancel() -> void:
 	pending = ""
+	speech_active = false
+	speech_queue.clear()
 	if player != null:
 		player.stop()
 
@@ -104,6 +129,7 @@ func _process(delta: float) -> void:
 			pending = ""
 		else:
 			_try_pending()
+	_next_speech()
 
 
 func _try_pending() -> void:
@@ -120,6 +146,7 @@ func _try_pending() -> void:
 			return
 		cached_streams[key] = stream
 	player.stream = cached_streams[key]
+	speech_active = true
 	player.play()
 	played_count += 1
 	pending = ""

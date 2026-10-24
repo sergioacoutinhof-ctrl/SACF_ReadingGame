@@ -54,3 +54,7 @@ APK de teste Android exportado e assinado, com ARM de 32 e 64 bits e perfis gen�
 ## Atualização da versão 0.4
 
 Catálogo público com 42 palavras e ilustrações, pacote particular de palavras, rodadas de seis palavras, cadastro de fotos e edição de palavras no aparelho. PIN criado pelo responsável protege configurações e saída. Integração com fixação nativa do Android e instruções para exigir a senha ao desafixar; validação dos gestos no tablet real continua necessária. Bônus atualizado com letras da mesma palavra, buracos, quedas, vitória e opção de desligar os buracos.
+
+## Atualização da versão 0.4.1
+
+Início e configuração separados, preservação do personagem escolhido após confirmar a fixação, acesso aos pais por um dedo, menu curto após PIN e saída que aguarda liberação nativa confirmada. Letras do bônus faladas com fila e teste real de áudio no Windows.

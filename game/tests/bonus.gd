@@ -57,7 +57,9 @@ func _run() -> void:
 	assert(run.advance(0.016).is_empty())
 	run.request_jump()
 	assert(run.advance(0.03).size() == 1)
+	assert(run.pickup_letters == ["A"], "A coleta deve identificar a letra exata para narração.")
 	assert(run.advance(0.03).is_empty() and run.collected == 1 and run.won())
+	assert(run.pickup_letters.is_empty(), "Uma letra coletada não pode ser narrada de novo no quadro seguinte.")
 	# Simulação automática confirma que todas as letras e buracos são alcançáveis.
 	for target in ["PÉ", "BOLA", "MAMÃE", "CAVALEIRO", "ABACAXIZEIROS"]:
 		run.reset(4, target)

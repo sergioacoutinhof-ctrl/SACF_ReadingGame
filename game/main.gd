@@ -1,5 +1,7 @@
 extends Control
 
+const PARENT_HOLD_TIME := 1.2
+const NO_POINTER := -99
 const WIDTH := 1280.0
 const HEIGHT := 720.0
 const SELECT := 0
@@ -60,6 +62,13 @@ var content := FAMILY_CONTENT.new()
 var parents: CanvasLayer
 var android_guard: Node
 var word_art: Dictionary = {}
+var pending_start := false
+var native_transition := false
+var parent_pointer := NO_POINTER
+var parent_hold_age := 0.0
+var parent_hold_cancelled := false
+var parent_press_position := Vector2.ZERO
+var bonus_voice_started := false
 
 
 func _ready() -> void:
@@ -87,8 +96,10 @@ func _ready() -> void:
 	parents.content_changed.connect(_content_changed)
 	parents.resumed.connect(_resume_after_parent)
 	parents.exit_requested.connect(_authorized_exit)
+	parents.cancelled.connect(func(): pending_start = false)
+	parents.security_requested.connect(_open_android_security)
 	if not content.has_pin() and DisplayServer.get_name() != "headless":
-		_request_parent.call_deferred()
+		_request_parent.call_deferred("setup")
 	if DisplayServer.get_name() != "headless" and OS.get_name() != "Windows":
 		var voices := DisplayServer.tts_get_voices_for_language("pt")
 		if not voices.is_empty():
@@ -168,6 +179,7 @@ func _apply_character_pack(manifest: Dictionary, texture: Texture2D) -> bool:
 
 
 func _process(delta: float) -> void:
+	_process_parent_hold(delta)
 	if parents != null and parents.is_open:
 		return
 	elapsed += delta
@@ -198,7 +210,7 @@ func _process(delta: float) -> void:
 		_process_bonus(delta)
 	elif mode == BONUS_RESULT:
 		word_done_age += delta
-		if word_done_age >= 2.0:
+		if word_done_age >= 2.0 and (not _voice_busy() or word_done_age >= 5.0):
 			_advance_word()
 	queue_redraw()
 
@@ -216,16 +228,77 @@ func _input(event: InputEvent) -> void:
 		if mode == BONUS and event.keycode == KEY_SPACE:
 			bonus.request_jump()
 			return
-	var pressed := false
-	var screen_position := Vector2.ZERO
-	if event is InputEventScreenTouch and event.pressed:
-		pressed = true
-		screen_position = event.position
-	elif event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
-		pressed = true
-		screen_position = event.position
-	if not pressed:
+	if _handle_parent_pointer(event):
 		return
+	if event is InputEventScreenTouch and event.pressed:
+		_handle_press(event.position)
+	elif event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
+		_handle_press(event.position)
+
+
+func _parent_target() -> Rect2:
+	return Rect2(1008, 640, 260, 72)
+
+
+func _clear_parent_hold() -> void:
+	parent_pointer = NO_POINTER
+	parent_hold_age = 0.0
+	parent_hold_cancelled = false
+
+
+func _handle_parent_pointer(event: InputEvent) -> bool:
+	if mode == SELECT:
+		return false
+	if event is InputEventScreenDrag or event is InputEventMouseMotion:
+		var pointer: int = event.index if event is InputEventScreenDrag else -1
+		if pointer == parent_pointer:
+			if _to_design(event.position).distance_to(_to_design(parent_press_position)) > 36:
+				parent_hold_cancelled = true
+			return true
+		return false
+	var pointer := NO_POINTER
+	var down := false
+	var position := Vector2.ZERO
+	if event is InputEventScreenTouch:
+		pointer = event.index
+		down = event.pressed
+		position = event.position
+	elif event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT:
+		pointer = -1
+		down = event.pressed
+		position = event.position
+	else:
+		return false
+	if not down and pointer == parent_pointer:
+		var original := parent_press_position
+		_clear_parent_hold()
+		_handle_press(original)
+		return true
+	if down and parent_pointer != NO_POINTER and pointer != parent_pointer:
+		var original := parent_press_position
+		_clear_parent_hold()
+		_handle_press(original)
+		_handle_press(position)
+		return true
+	if down and _parent_target().has_point(_to_design(position)):
+		parent_pointer = pointer
+		parent_press_position = position
+		parent_hold_age = 0.0
+		parent_hold_cancelled = false
+		return true
+	return false
+
+
+func _process_parent_hold(delta: float) -> void:
+	if parent_pointer == NO_POINTER or parent_hold_cancelled:
+		return
+	parent_hold_age += delta
+	if parent_hold_age >= PARENT_HOLD_TIME:
+		_clear_parent_hold()
+		_request_parent()
+
+
+func _handle_press(screen_position: Vector2) -> void:
 	if mode == BONUS:
 		bonus.request_jump()
 		return
@@ -256,7 +329,8 @@ func _notification(what: int) -> void:
 		_request_parent()
 
 
-func _request_parent() -> void:
+func _request_parent(reason: String = "menu") -> void:
+	_clear_parent_hold()
 	if parents == null or parents.is_open:
 		return
 	sound.music.stop()
@@ -264,10 +338,14 @@ func _request_parent() -> void:
 	sound.narrator.cancel()
 	if OS.get_name() != "Windows" and DisplayServer.get_name() != "headless":
 		DisplayServer.tts_stop()
-	parents.request_access()
+	parents.request_access(reason)
 
 
 func _resume_after_parent() -> void:
+	if pending_start:
+		pending_start = false
+		_start_session()
+		return
 	if mode != SELECT:
 		sound.start_music()
 
@@ -282,17 +360,50 @@ func _content_changed() -> void:
 	queue_redraw()
 
 
+func _release_pinning(timeout: float = 3.0) -> bool:
+	if not android_guard.available() or android_guard.lock_state() == 0:
+		return true
+	android_guard.stop_pinning()
+	var deadline := Time.get_ticks_msec() + int(timeout * 1000)
+	while android_guard.lock_state() > 0:
+		if Time.get_ticks_msec() >= deadline:
+			return false
+		await get_tree().create_timer(0.1).timeout
+	return true
+
+
 func _authorized_exit() -> void:
 	if parents == null or not parents.authorized:
 		return
-	android_guard.stop_pinning()
-	await get_tree().create_timer(0.35).timeout
-	get_tree().quit()
+	if native_transition:
+		parents.exit_failed()
+		return
+	native_transition = true
+	var released: bool = await _release_pinning()
+	native_transition = false
+	if released:
+		get_tree().quit()
+	else:
+		parents.exit_failed()
+
+
+func _open_android_security() -> void:
+	if not parents.authorized or native_transition:
+		return
+	native_transition = true
+	parents.show_status("Abrindo a segurança do tablet…")
+	var released: bool = await _release_pinning()
+	native_transition = false
+	if released:
+		android_guard.security_settings()
+	else:
+		parents.show_status("A tela ainda está fixada. Tente abrir a segurança novamente.")
 
 
 func _start_session() -> void:
-	if OS.get_name() == "Android" and (not content.has_pin() or not content.android_exit_pin_confirmed or not android_guard.device_has_pin() or android_guard.lock_state() == 0):
-		_request_parent()
+	if (OS.get_name() == "Android" or android_guard.available()) and (not content.has_pin() or not content.android_exit_pin_confirmed or not android_guard.device_has_pin() or android_guard.lock_state() == 0):
+		pending_start = true
+		parents.request_start()
 		return
 	if mode == SELECT or mode == SESSION_DONE:
 		words = content.session_words()
@@ -380,6 +491,7 @@ func _start_bonus() -> void:
 	if mode != WORD_DONE:
 		return
 	mode = BONUS
+	bonus_voice_started = false
 	bonus.reset(effect_rng.randi(), _current_word(), content.holes_enabled)
 	particles.clear()
 	selected_lane = -1
@@ -394,8 +506,10 @@ func _process_bonus(delta: float) -> void:
 	if bonus.total_jumps > previous_jumps:
 		sound.play_jump()
 		_burst(Vector2(bonus.RUNNER_X - 15.0, bonus.feet_y), 5)
-	for point in pickups:
-		_burst(point, 12)
+	for index in pickups.size():
+		_burst(pickups[index], 12)
+		_speak(bonus.pickup_letters[index], not bonus_voice_started)
+		bonus_voice_started = true
 	if not pickups.is_empty():
 		bonus_total_stars += pickups.size()
 		sound.play_bonus_star()
@@ -427,11 +541,19 @@ func _advance_word() -> void:
 		_speak(_current_word())
 
 
-func _speak(value: String) -> void:
+func _voice_busy() -> bool:
+	if sound.muted or DisplayServer.get_name() == "headless":
+		return false
+	if OS.get_name() == "Windows":
+		return sound.narrator.is_speaking()
+	return DisplayServer.tts_is_speaking()
+
+
+func _speak(value: String, interrupt: bool = true) -> void:
 	if sound.muted:
 		return
 	if OS.get_name() == "Windows":
-		sound.narrator.speak(value)
+		sound.narrator.speak(value, interrupt)
 	elif DisplayServer.get_name() != "headless":
 		# A síntese de fala do Android pode terminar de iniciar depois de _ready().
 		if voice_id.is_empty():
@@ -439,7 +561,7 @@ func _speak(value: String) -> void:
 			if not voices.is_empty():
 				voice_id = voices[0]
 		if not voice_id.is_empty():
-			DisplayServer.tts_speak(value.to_lower(), voice_id, 75, 1.0, 0.85, 0, true)
+			DisplayServer.tts_speak(value.to_lower(), voice_id, 75, 1.0, 0.85, 0, interrupt)
 
 
 func _to_design(screen_position: Vector2) -> Vector2:
@@ -471,7 +593,19 @@ func _draw() -> void:
 			_draw_bonus()
 			if mode == BONUS_RESULT:
 				_draw_bonus_result()
+	if mode != SELECT:
+		_draw_parent_access()
 	draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
+
+
+func _draw_parent_access() -> void:
+	var target := _parent_target()
+	_panel(target, Color("fffdf3"), TEAL, 14, 1)
+	_text("PAIS / SAIR · SEGURE", target.get_center() + Vector2(0, 6), 16, TEAL, true, true)
+	if parent_pointer != NO_POINTER and not parent_hold_cancelled:
+		var progress := clampf(parent_hold_age / PARENT_HOLD_TIME, 0, 1)
+		if progress > 0:
+			draw_rect(Rect2(target.position + Vector2(10, target.size.y - 5), Vector2((target.size.x - 20) * progress, 3)), TEAL)
 
 
 func _draw_background() -> void:
@@ -484,6 +618,7 @@ func _draw_background() -> void:
 
 
 func _draw_select() -> void:
+	_text("v" + str(ProjectSettings.get_setting("application/config/version", "")), Vector2(20, 704), 16, INK, false)
 	_panel(Rect2(1040, 14, 216, 52), Color("fffdf3"), Color.TRANSPARENT, 18)
 	_text("Responsáveis", Vector2(1148, 48), 22, TEAL, true, true)
 	draw_rect(Rect2(0, 0, WIDTH, HEIGHT), Color(0.91, 0.98, 0.95, 0.2))
@@ -618,9 +753,9 @@ func _draw_hud() -> void:
 func _draw_zone_labels() -> void:
 	# Legendas de orientação, sem retângulos clicáveis.
 	_text("TOQUE À ESQUERDA", Vector2(250, 698), 20, Color("24656c"), true, true)
-	_text("TOQUE À DIREITA", Vector2(1030, 698), 20, Color("674b87"), true, true)
+	_text("TOQUE À DIREITA", Vector2(865, 698), 20, Color("674b87"), true, true)
 	_polyline([Vector2(74, 681), Vector2(64, 689), Vector2(74, 697)], TEAL, 4)
-	_polyline([Vector2(1206, 681), Vector2(1216, 689), Vector2(1206, 697)], PURPLE, 4)
+	_polyline([Vector2(980, 681), Vector2(990, 689), Vector2(980, 697)], PURPLE, 4)
 
 
 func _draw_word_done() -> void:

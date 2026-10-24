@@ -13,6 +13,8 @@ Jogo de alfabetização 2D para tablets Android. A criança escolhe uma princesa
 - Trilha suave e efeitos musicais originais, reproduzidos offline.
 - Ao completar cada palavra, corrida bônus de até 15 segundos com letras da mesma palavra, buracos, salto por toque em qualquer lugar e explosões de estrelinhas. Cair encerra a tentativa; buracos podem ser desligados pelo responsável. Depois, retorno automático às letras.
 - Passos e pulos com movimentos diferentes para ursinho, princesa e cavaleiro, inclusive nos pacotes locais.
+- No bônus, cada letra coletada é falada; coletas próximas entram em fila.
+- Para pausar ou sair, segure **PAIS / SAIR** por 1,2 segundo com um dedo e digite o PIN. O menu oferece continuar, configurar ou sair.
 - Um toque é aceito por animação; não responder oferece outra oportunidade sem registrar erro.
 - Catálogo público com 42 palavras e ilustrações; pacote privado pode acrescentar nomes da família.
 - Rodadas de seis palavras, com avanço pelo catálogo.
@@ -21,7 +23,7 @@ Jogo de alfabetização 2D para tablets Android. A criança escolhe uma princesa
 
 No Windows, a voz é preparada como áudio local em segundo plano e reproduzida pelo jogo, evitando o bloqueio do reprodutor de voz do sistema.
 
-Gravações de fonemas, progressão adaptativa, volumes separados, redução de efeitos e importação/exportação de perfis continuam nas próximas etapas. A versão 0.4 já permite editar palavras e fotos e exportar o APK de teste.
+Gravações de fonemas, progressão adaptativa, volumes separados, redução de efeitos e importação/exportação de perfis continuam nas próximas etapas. A versão 0.4.1 já permite editar palavras e fotos e exportar o APK de teste.
 
 ## Abrir no computador
 
@@ -39,6 +41,7 @@ Veja o [passo a passo de instalação e exportação Android](docs/INSTALAR-NO-A
 
 ## Documentos e verificação
 
+- [Fluxo de entrada, pausa e saída](docs/FLUXO-ENTRADA-E-SAIDA.md)
 - [Palavras, fotos e PIN](docs/PALAVRAS-FOTOS-E-PIN.md)
 - [Requisitos públicos](docs/REQUISITOS-PUBLICOS.md)
 - [Plano de desenvolvimento](docs/PLANO-DE-DESENVOLVIMENTO.md)

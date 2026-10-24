@@ -3,9 +3,14 @@ extends CanvasLayer
 signal content_changed
 signal resumed
 signal exit_requested
+signal cancelled
+signal security_requested
 var store: RefCounted
 var guard: Node
 var is_open := false
+var intent := "menu"
+var screen := ""
+var exit_busy := false
 var authorized := false
 var failures := 0
 var blocked_until := 0
@@ -116,6 +121,7 @@ func _process(delta: float) -> void:
 
 
 func _clear(title: String) -> void:
+	screen = title
 	for child in body.get_children():
 		body.remove_child(child)
 		child.queue_free()
@@ -144,10 +150,11 @@ func _button(text: String, callback: Callable, parent: Node = null) -> Button:
 	return button
 
 
-func request_access() -> void:
+func request_access(reason: String = "menu") -> void:
 	if is_open:
 		return
 	is_open = true
+	intent = reason if store.has_pin() else "setup"
 	authorized = false
 	changing_pin = false
 	pending_pin = ""
@@ -225,8 +232,12 @@ func _submit_pin() -> void:
 	failures = 0
 	authorized = true
 	pending_pin = ""
+	var needs_setup := changing_pin or intent == "setup"
 	changing_pin = false
-	_show_home()
+	if needs_setup:
+		_show_home()
+	else:
+		_show_actions()
 
 
 func _cancel_pin() -> void:
@@ -234,7 +245,57 @@ func _cancel_pin() -> void:
 		changing_pin = false
 		_show_home()
 	elif store.has_pin():
+		cancelled.emit()
 		_close()
+
+
+func _show_actions() -> void:
+	if not authorized:
+		return
+	_clear("Jogo pausado")
+	_label("Escolha o que deseja fazer.")
+	_button("Continuar jogando", _resume_game)
+	_button("Configurações e fotos", _show_home)
+	_button("Sair do jogo", _exit_game)
+	message = _label("")
+
+
+func request_start() -> void:
+	if is_open:
+		return
+	if not store.has_pin() or (_on_android() and (not store.android_exit_pin_confirmed or not guard.device_has_pin())):
+		request_access("setup")
+		return
+	if not _on_android() or guard.lock_state() > 0:
+		resumed.emit()
+		return
+	is_open = true
+	authorized = false
+	intent = "start"
+	cover.show()
+	_show_start()
+	_begin_pinning()
+
+
+func _show_start() -> void:
+	_clear("Preparando a partida")
+	_label("Confirme a fixação no aviso do Android. A partida começa em seguida.")
+	message = _label("")
+	_button("Fixar e começar", _begin_pinning)
+	_button("Voltar", _cancel_start)
+
+
+func _begin_pinning() -> void:
+	if not store.has_pin() or not store.android_exit_pin_confirmed or not guard.device_has_pin():
+		message.text = "A proteção do tablet precisa ser configurada na área dos responsáveis."
+		return
+	awaiting_pinning = guard.start_pinning()
+	message.text = guard.last_error
+
+
+func _cancel_start() -> void:
+	cancelled.emit()
+	_close()
 
 
 func _on_android() -> bool:
@@ -281,8 +342,8 @@ func _show_home() -> void:
 	message = _label("")
 	var row := HBoxContainer.new()
 	body.add_child(row)
-	_button("Voltar a brincar", _resume_game, row)
-	_button("Liberar e sair do jogo", _exit_game, row)
+	_button("Voltar ao menu", _show_actions, row)
+	_button("Brincar", _resume_game, row)
 
 
 func _pin_now() -> void:
@@ -293,23 +354,27 @@ func _pin_now() -> void:
 
 
 func _open_security() -> void:
-	if not authorized:
-		return
-	guard.stop_pinning()
-	await get_tree().create_timer(0.35).timeout
-	guard.security_settings()
+	if authorized:
+		security_requested.emit()
+
+
+func show_status(value: String) -> void:
+	if is_open and is_instance_valid(message):
+		message.text = value
 
 
 func _resume_game() -> void:
 	if not authorized:
 		return
-	if _on_android() and not store.android_exit_pin_confirmed:
-		message.text = "Ative exigir PIN ao desafixar em Segurança do tablet. Depois confirme a opção acima."
+	if _on_android() and (not store.android_exit_pin_confirmed or not guard.device_has_pin()):
+		_show_home()
+		message.text = "Ative exigir PIN ao desafixar nas opções do tablet e confirme a opção acima."
 		return
 	if _on_android() and guard.lock_state() == 0:
-		if guard.start_pinning():
-			awaiting_pinning = true
-		message.text = guard.last_error + " Ative também exigir PIN ao desafixar nas opções do tablet."
+		intent = "start"
+		authorized = false
+		_show_start()
+		_begin_pinning()
 		return
 	_close()
 
@@ -318,13 +383,22 @@ func _close() -> void:
 	awaiting_pinning = false
 	is_open = false
 	authorized = false
+	exit_busy = false
 	cover.hide()
 	resumed.emit()
 
 
 func _exit_game() -> void:
-	if authorized:
-		exit_requested.emit()
+	if not authorized or exit_busy:
+		return
+	exit_busy = true
+	message.text = "Liberando a tela para sair…"
+	exit_requested.emit()
+
+
+func exit_failed() -> void:
+	exit_busy = false
+	message.text = "O Android ainda não liberou a tela. Toque em Sair do jogo para tentar novamente."
 
 
 func _show_words() -> void:

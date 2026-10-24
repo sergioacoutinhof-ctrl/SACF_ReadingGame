@@ -6,6 +6,14 @@ class FakeAndroidGuard extends Node:
 	var state := 0
 	var starts := 0
 	var last_error := "Confirme no Android."
+	var stops := 0
+	var release_enabled := true
+	func device_has_pin() -> bool:
+		return true
+	func stop_pinning() -> void:
+		stops += 1
+		if release_enabled:
+			get_tree().create_timer(0.15).timeout.connect(func(): state = 0)
 	func available() -> bool:
 		return true
 	func lock_state() -> int:
@@ -115,9 +123,58 @@ func _run() -> void:
 	fake.state = 2
 	game.parents._process(0.5)
 	assert(not game.parents.is_open and not game.parents.authorized)
+	# Começar de novo não deve pedir PIN nem mostrar configurações já prontas.
+	game.android_guard = fake
+	fake.state = 0
+	game.mode = game.SELECT
+	game.character_index = 2
+	game._start_session()
+	assert(game.pending_start and game.parents.is_open)
+	assert(game.parents.screen == "Preparando a partida" and not game.parents.authorized)
+	fake.state = 2
+	game.parents._process(0.5)
+	assert(game.mode == game.PLAY and game.character_index == 2 and not game.pending_start)
+	# O comando de um dedo mantém toques breves como escolhas de letra.
+	var size: Vector2 = game.get_viewport_rect().size
+	var factor: float = minf(size.x / game.WIDTH, size.y / game.HEIGHT)
+	var origin: Vector2 = (size - Vector2(game.WIDTH, game.HEIGHT) * factor) / 2.0
+	var point: Vector2 = origin + game._parent_target().get_center() * factor
+	var touch := InputEventScreenTouch.new()
+	touch.index = 0
+	touch.position = point
+	touch.pressed = true
+	game._input(touch)
+	game._process(0.15)
+	touch.pressed = false
+	game._input(touch)
+	assert(not game.parents.is_open and game.selected_lane == 1)
+	game._finish_choice()
+	# Segurar uma vez pausa e abre o PIN, sem disparar uma escolha de letra.
+	touch.pressed = true
+	game._input(touch)
+	game._process(game.PARENT_HOLD_TIME + 0.01)
+	assert(game.parents.is_open and not game.parents.authorized)
+	game.parents.pin_field.text = "409621"
+	game.parents._submit_pin()
+	assert(game.parents.screen == "Jogo pausado", "O PIN deve levar ao menu curto, não às configurações.")
+	# Liberação aguarda o Android confirmar; atraso e falha não encerram cedo.
+	fake.state = 2
+	assert(await game._release_pinning(0.7))
+	assert(fake.stops == 1 and fake.state == 0)
+	fake.state = 2
+	fake.release_enabled = false
+	assert(not await game._release_pinning(0.15))
+	assert(game.parents.authorized)
+	# Cancelar uma tentativa de início deve voltar à seleção, sem reabrir o PIN.
+	game.parents._close()
+	game.mode = game.SELECT
+	fake.state = 0
+	game._start_session()
+	game.parents._cancel_start()
+	assert(not game.pending_start and not game.parents.is_open and game.mode == game.SELECT)
 	DirAccess.remove_absolute(store.profile_path)
 	DirAccess.remove_absolute(source)
 	game.free()
 	await process_frame
-	print("FAMILY_PARENT_OK: 42+ palavras, acentos, PIN confirmado/persistido, bloqueio após tentativas, saída protegida, pausa, edição, foto e rodadas")
+	print("FAMILY_PARENT_OK: 42+ palavras, acentos, PIN confirmado/persistido, bloqueio após tentativas, saída protegida, pausa, edição, foto e rodadas; início direto, saída por um dedo e liberação confirmada")
 	quit()
